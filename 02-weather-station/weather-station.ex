@@ -28,12 +28,23 @@ defmodule WeatherStation do
   end
 
   @doc """
-  Generates an Enum of length `size` filled with random `WeatherDataPoint`s
+  Generates an Enum of `size` elements filled with random `WeatherDataPoint`s
   """
   def gen_weather_dataset(size) do
-    0..size
+    0..(size-1)
     |> Enum.map(fn _ -> gen_weather_data_point() end)
   end
+
+  @doc """
+  Takes in an Enum of `WeatherDataPoint`s and logs each to the console
+  """
+  def log_wheather_data(enum) do
+    enum
+    |> Enum.with_index()
+    |> Enum.map(fn {val, ind} -> "Hour: #{ind} #{val} \n" end)
+    |> IO.puts()
+  end
+
 end
 
-WeatherStation.gen_weather_dataset(5)
+WeatherStation.gen_weather_dataset(24) |> WeatherStation.log_wheather_data()
