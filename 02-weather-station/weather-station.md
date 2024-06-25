@@ -14,15 +14,15 @@ Create an Elixir module that simulates a weather station. This module should gen
 - Implement a function `log_weather_data/1` that takes the list of weather data points and logs each data point to the console. {cm:2024-06-25}
 - Format the log as `"Hour X: Temperature: Y°C, Humidity: Z%, Wind Speed: W km/h"` where X is the hour (0 to 23). {cm:2024-06-25}
 
-### 3. Calculating Statistics
-- Implement a function `calculate_statistics/1` that takes the list of weather data points and calculates the following statistics:
-  - Average temperature
-  - Maximum humidity
-  - Average wind speed
-- The function should return a map with keys `:avg_temperature`, `:max_humidity`, and `:avg_wind_speed`.
+### 3. Calculating Statistics {cm:2024-06-25}
+- Implement a function `calculate_statistics/1` that takes the list of weather data points and calculates the following statistics: {cm:2024-06-25}
+  - Average temperature {cm:2024-06-25}
+  - Maximum humidity {cm:2024-06-25}
+  - Average wind speed {cm:2024-06-25}
+- The function should return a map with keys `:avg_temperature`, `:max_humidity`, and `:avg_wind_speed`. {cm:2024-06-25}
 
-### 4. Simulate Weather Station
-- Implement a function `simulate_weather_station/0` that generates the weather data, logs it, and then calculates and logs the statistics.
+### 4. Simulate Weather Station {cm:2024-06-25}
+- Implement a function `simulate_weather_station/0` that generates the weather data, logs it, and then calculates and logs the statistics. {cm:2024-06-25}
 
 ## Bonus Challenges
 
