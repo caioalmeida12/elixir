@@ -98,11 +98,7 @@ defmodule WeatherStation do
 
     statistics = dataset |> calculate_statistics()
     statistics |> IO.puts
-
-
   end
-
-
 end
 
 WeatherStation.simulate_weather_station()
