@@ -43,7 +43,12 @@ defmodule AdventOfCode20233 do
   def get_imediate_neighbours(matrix, %{line: 0, col: 1}) do
     above = [".", ".", "."]
     middle = [matrix |> Enum.at(0) |> Enum.at(0), ".", matrix |> Enum.at(0) |> Enum.at(2)]
-    below = [matrix |> Enum.at(1) |> Enum.at(0), matrix |> Enum.at(1) |> Enum.at(1), matrix |> Enum.at(1) |> Enum.at(2)]
+
+    below = [
+      matrix |> Enum.at(1) |> Enum.at(0),
+      matrix |> Enum.at(1) |> Enum.at(1),
+      matrix |> Enum.at(1) |> Enum.at(2)
+    ]
 
     [
       above,
@@ -65,9 +70,91 @@ defmodule AdventOfCode20233 do
   end
 
   def get_imediate_neighbours(matrix, %{line: line, col: 0}) when line == length(matrix) - 1 do
-    above = [".", matrix |> Enum.at(line - 1) |> Enum.at(0), matrix |> Enum.at(line - 1) |> Enum.at(1)]
+    above = [
+      ".",
+      matrix |> Enum.at(line - 1) |> Enum.at(0),
+      matrix |> Enum.at(line - 1) |> Enum.at(1)
+    ]
+
     middle = [".", ".", matrix |> Enum.at(line) |> Enum.at(1)]
     below = [".", ".", "."]
+
+    [
+      above,
+      middle,
+      below
+    ]
+  end
+
+  def get_imediate_neighbours(matrix, %{line: line, col: 1}) when line == length(matrix) - 1 do
+    above = [
+      matrix |> Enum.at(line - 1) |> Enum.at(0),
+      matrix |> Enum.at(line - 1) |> Enum.at(1),
+      matrix |> Enum.at(line - 1) |> Enum.at(2)
+    ]
+
+    middle = [matrix |> Enum.at(line) |> Enum.at(0), ".", matrix |> Enum.at(line) |> Enum.at(2)]
+    below = [".", ".", "."]
+
+    [
+      above,
+      middle,
+      below
+    ]
+  end
+
+  def get_imediate_neighbours(matrix, %{line: line, col: col}) when line == length(matrix) - 1 do
+    # check if it's the last column
+    max_col_ind = length(Enum.at(matrix, 0)) - 1
+
+    if col == max_col_ind do
+      above = [
+        matrix |> Enum.at(line - 1) |> Enum.at(col - 1),
+        matrix |> Enum.at(line - 1) |> Enum.at(col),
+        "."
+      ]
+
+      middle = [matrix |> Enum.at(line) |> Enum.at(col - 1), ".", "."]
+      below = [".", ".", "."]
+
+      [
+        above,
+        middle,
+        below
+      ]
+    else
+      # Handle cells on the last row but not in the last column
+      above = [
+        matrix |> Enum.at(line - 1) |> Enum.at(col - 1),
+        matrix |> Enum.at(line - 1) |> Enum.at(col),
+        matrix |> Enum.at(line - 1) |> Enum.at(col + 1)
+      ]
+
+      middle = [matrix |> Enum.at(line) |> Enum.at(col - 1), ".", matrix |> Enum.at(line) |> Enum.at(col + 1)]
+      below = ["." , ".", "."]
+
+      [
+        above,
+        middle,
+        below
+      ]
+    end
+  end
+
+  def get_imediate_neighbours(matrix, %{line: line, col: col}) do
+    above = [
+      matrix |> Enum.at(line - 1) |> Enum.at(col-1),
+      matrix |> Enum.at(line - 1) |> Enum.at(col),
+      matrix |> Enum.at(line - 1) |> Enum.at(col+1)
+    ]
+
+    middle = [matrix |> Enum.at(line) |> Enum.at(col-1), ".", matrix |> Enum.at(line) |> Enum.at(col+1)]
+
+    below = [
+      matrix |> Enum.at(line + 1) |> Enum.at(col-1),
+      matrix |> Enum.at(line + 1) |> Enum.at(col),
+      matrix |> Enum.at(line + 1) |> Enum.at(col+1)
+    ]
 
     [
       above,

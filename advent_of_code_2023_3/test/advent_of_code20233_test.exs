@@ -39,12 +39,17 @@ defmodule AdventOfCode20233Test do
            |> AdventOfCode20233.get_imediate_neighbours(%{line: length(@test_matrix) - 1, col: 0}) ==
              [[".", ".", "."], [".", ".", "."], [".", ".", "."]]
 
-    # assert @test_matrix
-    #        |> AdventOfCode20233.get_imediate_neighbours(%{line: length(@test_matrix) - 1, col: 1}) ==
-    #          [[".", ".", "."], [".", ".", "3"], [".", ".", "."]]
+    assert @test_matrix
+           |> AdventOfCode20233.get_imediate_neighbours(%{line: length(@test_matrix) - 1, col: 1}) ==
+             [[".", ".", "."], [".", ".", "3"], [".", ".", "."]]
 
-    # assert @test_matrix |> AdventOfCode20233.get_imediate_neighbours(%{line: length(@test_matrix), col: length(Enum.at(@test_matrix, 0)) - 1}) == [[".", ".", "."],["5", ".", "."], [".", ".", "."]]
-    # assert @test_matrix |> AdventOfCode20233.get_imediate_neighbours(%{line: 1, col: 1}) == [["4", "6", "7"],[".", ".", "."], [".", ".", "3"]]
+    assert @test_matrix
+           |> AdventOfCode20233.get_imediate_neighbours(%{
+             line: length(@test_matrix) - 1,
+             col: (length(Enum.at(@test_matrix, 0)) - 1)
+           }) == [["*", ".", "."], ["5", ".", "."], [".", ".", "."]]
+
+    assert @test_matrix |> AdventOfCode20233.get_imediate_neighbours(%{line: 1, col: 1}) == [["4", "6", "7"],[".", ".", "."], [".", ".", "3"]]
   end
 
   # test "detects all numbers adjacent to a symbol position and outputs their absolute position" do
