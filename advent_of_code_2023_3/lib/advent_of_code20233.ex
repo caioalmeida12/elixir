@@ -164,32 +164,46 @@ defmodule AdventOfCode20233 do
         outer_matrix,
         {inner_matrix, %{line: _inner_line, col: inner_col}}
       ) do
-    # take a line of the inner matrix and get the index of the last number
-    {last_number, last_number_index} =
-      inner_matrix
-      |> Enum.at(0)
-      |> Enum.with_index()
-      |> Enum.reverse()
-      |> Enum.find(&String.match?(Tuple.to_list(&1) |> Enum.at(0), ~r/\d/))
+    outer_matrix
+    |> Enum.with_index()
+    |> Enum.map(fn {outer_line_value, outer_line_index} ->
+      last_number =
+        inner_matrix
+        |> Enum.at(outer_line_index)
+        |> Enum.with_index()
+        |> Enum.reverse()
+        |> Enum.find(&String.match?(Tuple.to_list(&1) |> Enum.at(0), ~r/\d/))
 
-    # extrapolate the last_number_index to the scope of the outer matrix
-    outer_matrix_last_number_index = inner_col - 1 + last_number_index
+      if (last_number != nil) do
+        # take a line of the inner matrix and get the index of the last number
+        {last_number, last_number_index} =
+          inner_matrix
+          |> Enum.at(outer_line_index)
+          |> IO.inspect()
+          |> Enum.with_index()
+          |> Enum.reverse()
+          |> Enum.find(&String.match?(Tuple.to_list(&1) |> Enum.at(0), ~r/\d/))
 
-    # check if the digit to the left of the outer_matrix_last_number_index is a number
-    line =
-      outer_matrix
-      |> Enum.at(0)
+        # extrapolate the last_number_index to the scope of the outer matrix
+        outer_matrix_last_number_index = inner_col - 1 + last_number_index
 
-    numbers_left =
-      is_left_a_number(
-        line,
-        outer_matrix_last_number_index
-      )
+        # check if the digit to the left of the outer_matrix_last_number_index is a number
 
-    # returns the full number
-    [numbers_left | [last_number]]
-    |> List.flatten()
-    |> Enum.join()
-    |> String.to_integer()
+        numbers_left =
+          is_left_a_number(
+            outer_line_value,
+            outer_matrix_last_number_index
+          )
+
+        # returns the full number
+        [numbers_left | [last_number]]
+        |> List.flatten()
+        |> Enum.join()
+        |> String.to_integer()
+      else
+        # no numbers in the line
+        0
+      end
+    end)
   end
 end

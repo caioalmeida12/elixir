@@ -4,8 +4,8 @@ defmodule AdventOfCode20233Test do
 
   @test_matrix [
     ["4", "6", "7", ".", "."],
-    [".", ".", ".", "*", "."],
-    [".", ".", "3", "5", "."]
+    [".", ".", "*", ".", "."],
+    [".", ".", "3", "5", "3"]
   ]
 
   test "reads the file" do
@@ -13,7 +13,7 @@ defmodule AdventOfCode20233Test do
   end
 
   test "detects a symbol and outputs its position" do
-    assert @test_matrix |> AdventOfCode20233.get_all_symbol_positions() == [%{line: 1, col: 3}]
+    assert @test_matrix |> AdventOfCode20233.get_all_symbol_positions() == [%{line: 1, col: 2}]
   end
 
   test "gets all imediate neighbours of a symbol" do
@@ -28,7 +28,7 @@ defmodule AdventOfCode20233Test do
              {[
                 [".", ".", "."],
                 ["4", ".", "7"],
-                [".", ".", "."]
+                [".", ".", "*"]
               ], %{line: 0, col: 1}}
 
     assert @test_matrix |> AdventOfCode20233.get_imediate_neighbours(%{line: 1, col: 0}) ==
@@ -45,7 +45,7 @@ defmodule AdventOfCode20233Test do
 
     assert @test_matrix
            |> AdventOfCode20233.get_imediate_neighbours(%{line: length(@test_matrix) - 1, col: 1}) ==
-             {[[".", ".", "."], [".", ".", "3"], [".", ".", "."]],
+             {[[".", ".", "*"], [".", ".", "3"], [".", ".", "."]],
               %{line: length(@test_matrix) - 1, col: 1}}
 
     assert @test_matrix
@@ -53,21 +53,21 @@ defmodule AdventOfCode20233Test do
              line: length(@test_matrix) - 1,
              col: length(Enum.at(@test_matrix, 0)) - 1
            }) ==
-             {[["*", ".", "."], ["5", ".", "."], [".", ".", "."]],
+             {[[".", ".", "."], ["5", ".", "."], [".", ".", "."]],
               %{
                 line: length(@test_matrix) - 1,
                 col: length(Enum.at(@test_matrix, 0)) - 1
               }}
 
     assert @test_matrix |> AdventOfCode20233.get_imediate_neighbours(%{line: 1, col: 1}) ==
-             {[["4", "6", "7"], [".", ".", "."], [".", ".", "3"]], %{line: 1, col: 1}}
+             {[["4", "6", "7"], [".", ".", "*"], [".", ".", "3"]], %{line: 1, col: 1}}
   end
 
   test "detects all numbers adjacent to a symbol position and outputs their absolute position" do
-    inner_matrix = @test_matrix |> AdventOfCode20233.get_imediate_neighbours(%{line: 1, col: 3})
+    inner_matrix = @test_matrix |> AdventOfCode20233.get_imediate_neighbours(%{line: 1, col: 2})
 
     assert inner_matrix ==
-             {[["7", ".", "."], [".", ".", "."], ["3", "5", "."]], %{line: 1, col: 3}}
+             {[["6", "7", "."], [".", ".", "."], [".", "3", "5"]], %{col: 2, line: 1}}
 
     @test_matrix |> AdventOfCode20233.get_numbers_to_the_left(inner_matrix) |> IO.inspect()
   end
