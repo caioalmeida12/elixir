@@ -68,7 +68,7 @@ defmodule AdventOfCode20233 do
     middle = [".", ".", matrix |> Enum.at(line) |> Enum.at(1)]
     below = [".", ".", "."]
 
-    {[ above, middle, below ], %{line: line, col: 0}}
+    {[above, middle, below], %{line: line, col: 0}}
   end
 
   def get_imediate_neighbours(matrix, %{line: line, col: 1}) when line == length(matrix) - 1 do
@@ -81,7 +81,7 @@ defmodule AdventOfCode20233 do
     middle = [matrix |> Enum.at(line) |> Enum.at(0), ".", matrix |> Enum.at(line) |> Enum.at(2)]
     below = [".", ".", "."]
 
-    {[ above, middle, below ], %{line: line, col: 1}}
+    {[above, middle, below], %{line: line, col: 1}}
   end
 
   def get_imediate_neighbours(matrix, %{line: line, col: col}) when line == length(matrix) - 1 do
@@ -98,7 +98,7 @@ defmodule AdventOfCode20233 do
       middle = [matrix |> Enum.at(line) |> Enum.at(col - 1), ".", "."]
       below = [".", ".", "."]
 
-      {[ above, middle, below ], %{line: line, col: col}}
+      {[above, middle, below], %{line: line, col: col}}
     else
       # Handle cells on the last row but not in the last column
       above = [
@@ -115,7 +115,7 @@ defmodule AdventOfCode20233 do
 
       below = [".", ".", "."]
 
-      {[ above, middle, below ], %{line: line, col: col}}
+      {[above, middle, below], %{line: line, col: col}}
     end
   end
 
@@ -138,12 +138,58 @@ defmodule AdventOfCode20233 do
       matrix |> Enum.at(line + 1) |> Enum.at(col + 1)
     ]
 
-    {[ above, middle, below ], %{line: line, col: col}}
+    {[above, middle, below], %{line: line, col: col}}
   end
 
-  @spec get_numbers_to_the_left(outer_matrix(), inner_matrix(), integer()) :: integer()
-  def get_numbers_to_the_left(outer_matrix, {inner_matrix, {inner_line, inner_col}}, outer_col_index) do
+  def is_left_a_number(line, index) do
+    is_left_a_number(line, index, [])
+  end
+
+  defp is_left_a_number(_line, 0, acc), do: acc
+
+  defp is_left_a_number(line, index, acc) do
+    char = Enum.at(line, index - 1)
+
+    if String.match?(char, ~r/\d/) do
+      # If the character is a number, add it to the accumulator and continue left
+      is_left_a_number(line, index - 1, [char | acc])
+    else
+      # If the character is not a number, return the accumulated numbers
+      acc
+    end
+  end
+
+  @spec get_numbers_to_the_left(outer_matrix(), inner_matrix()) :: integer()
+  def get_numbers_to_the_left(
+        outer_matrix,
+        {inner_matrix, %{line: _inner_line, col: inner_col}}
+      ) do
     # take a line of the inner matrix and get the index of the last number
-    inner_matrix |> Enum.at(0)
+    {last_number, last_number_index} =
+      inner_matrix
+      |> Enum.at(0)
+      |> Enum.with_index()
+      |> Enum.reverse()
+      |> Enum.find(&String.match?(Tuple.to_list(&1) |> Enum.at(0), ~r/\d/))
+
+    # extrapolate the last_number_index to the scope of the outer matrix
+    outer_matrix_last_number_index = inner_col - 1 + last_number_index
+
+    # check if the digit to the left of the outer_matrix_last_number_index is a number
+    line =
+      outer_matrix
+      |> Enum.at(0)
+
+    numbers_left =
+      is_left_a_number(
+        line,
+        outer_matrix_last_number_index
+      )
+
+    # returns the full number
+    [numbers_left | [last_number]]
+    |> List.flatten()
+    |> Enum.join()
+    |> String.to_integer()
   end
 end

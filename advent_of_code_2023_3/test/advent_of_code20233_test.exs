@@ -61,12 +61,14 @@ defmodule AdventOfCode20233Test do
 
     assert @test_matrix |> AdventOfCode20233.get_imediate_neighbours(%{line: 1, col: 1}) ==
              {[["4", "6", "7"], [".", ".", "."], [".", ".", "3"]], %{line: 1, col: 1}}
-
-    assert @test_matrix |> AdventOfCode20233.get_all_numbers_to_the_left({[["4", "6", "7"], [".", ".", "."], [".", ".", "3"]], %{line: 1, col: 1}})
   end
 
-  # test "detects all numbers adjacent to a symbol position and outputs their absolute position" do
-  #   symbol_position = %{line: 1, col: 3}
+  test "detects all numbers adjacent to a symbol position and outputs their absolute position" do
+    inner_matrix = @test_matrix |> AdventOfCode20233.get_imediate_neighbours(%{line: 1, col: 3})
 
-  # end
+    assert inner_matrix ==
+             {[["7", ".", "."], [".", ".", "."], ["3", "5", "."]], %{line: 1, col: 3}}
+
+    @test_matrix |> AdventOfCode20233.get_numbers_to_the_left(inner_matrix) |> IO.inspect()
+  end
 end
