@@ -78,4 +78,20 @@ defmodule AdventOfCode20235Test do
 
     assert AdventOfCode20235.get_lowest_location(global_map) == 35
   end
+
+  test "can interpret the seeds as a {start, range_length} pair" do
+    global_map =
+      AdventOfCode20235.read_file("./lib/example_input.txt")
+      |> AdventOfCode20235.get_global_map()
+
+    assert AdventOfCode20235.get_seed_ranges(global_map) == [{79, 92}, {55, 67}]
+  end
+
+  test "can find the lowest location for ranges of seeds" do
+    global_map =
+      AdventOfCode20235.read_file("./lib/example_input.txt")
+      |> AdventOfCode20235.get_global_map()
+
+    assert AdventOfCode20235.get_lowest_location_for_ranges(global_map) == 46
+  end
 end
