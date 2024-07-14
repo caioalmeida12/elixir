@@ -19,7 +19,7 @@ defmodule AdventOfCode20234 do
         row
         |> String.split(":", trim: true)
         |> Enum.at(0)
-        |> String.split(" ")
+        |> String.split(" ", trim: true)
         |> Enum.at(1)
 
         [winning_numbers, card_numbers] =
@@ -50,10 +50,39 @@ defmodule AdventOfCode20234 do
       if val > 0, do: acc + :math.pow(2, val-1), else: acc
     end)
   end
+
+  def get_copy_cards(formatted_input, {id, amount}) do
+    index_and_cards =
+      formatted_input
+      |> Enum.with_index()
+      |> Enum.map(fn {_, ind} -> {ind+1, Enum.at(formatted_input, ind)} end)
+
+    min_range = max((id+1), 0)
+    max_range = min((id+amount), length(formatted_input)-1)
+
+    min_range..max_range
+    |> Enum.map(fn range_id ->
+      index_and_cards
+      |> Enum.find(fn {index, _card} -> range_id == index end)
+    end)
+    |> Enum.filter(& &1)
+    |> Enum.map( fn {_, card} -> card end)
+  end
 end
 
-AdventOfCode20234.read_file("./lib/input.txt")
+# AdventOfCode20234.read_file("./lib/example_input.txt")
+# |> AdventOfCode20234.get_formatted_input()
+# |> Enum.map(&AdventOfCode20234.count_common_numbers/1)
+# |> AdventOfCode20234.get_total_result()
+# |> IO.inspect
+
+formatted_input =
+AdventOfCode20234.read_file("./lib/example_input.txt")
 |> AdventOfCode20234.get_formatted_input()
+
+formatted_input
 |> Enum.map(&AdventOfCode20234.count_common_numbers/1)
-|> AdventOfCode20234.get_total_result()
-|> IO.inspect
+|> Enum.with_index(&({&2+1, &1}))
+|> Enum.map(&AdventOfCode20234.get_copy_cards(formatted_input, &1))
+|> Enum.with_index()
+|> Enum.map(& IO.inspect(&1))
