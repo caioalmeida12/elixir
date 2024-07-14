@@ -173,16 +173,28 @@ defmodule AdventOfCode20233 do
     possible_lines = [max(min_line, line - 1), line, min(max_line, line + 1)] |> Enum.uniq()
     possible_cols = [max(min_col, col - 1), col, min(max_col, col + 1)] |> Enum.uniq()
 
-    possible_coords =
-      possible_lines
-      |> Enum.flat_map(fn line_ind ->
-        possible_cols
-        |> Enum.map(&{line_ind, &1})
-      end)
+    possible_lines
+    |> Enum.flat_map(fn line_ind ->
+      possible_cols
+      |> Enum.map(&{line_ind, &1})
+    end)
 
     # reject the symbol position, as it is never gonna be a number
-    possible_coords
-    |> Enum.reject(&(&1 == {line, col}))
+    # possible_coords
+    # |> Enum.reject(&(&1 == {line, col}))
+  end
+
+  @spec get_coordinates_of_stars(file_content()) :: list(tuple())
+  def get_coordinates_of_stars(file_content) do
+    get_symbol_coordinates(file_content)
+    |> Enum.filter(fn {line, col} ->
+      symbol =
+        Enum.at(file_content, line)
+        |> String.graphemes()
+        |> Enum.at(col)
+
+      symbol == "*"
+    end)
   end
 end
 
@@ -195,6 +207,7 @@ numbers_with_coordinates =
     AdventOfCode20233.get_number_coordinates_for_line(file_content, line_ind)
   end)
 
+  # Missing part - Task 3
 symbol_adjacent_coordinates =
   file_content
   |> AdventOfCode20233.get_symbol_coordinates()
@@ -221,5 +234,35 @@ end)
 |> Enum.sort()
 |> Enum.dedup()
 |> List.flatten()
+|> Enum.sum()
+|> IO.inspect()
+
+
+# Gear ratios - Task 4
+AdventOfCode20233.get_coordinates_of_stars(file_content)
+|> Enum.map(fn {line, col} ->
+  adjacent_numbers =
+    AdventOfCode20233.get_adjacent_coordinates_of_symbol(file_content, {line, col})
+    |> Enum.flat_map(fn neighbour_of_symbol ->
+      # for every coordinate adjacent of a symbol (neighbour_of_symbol)
+      # take the numbers_with_coordinates
+      # for every number
+      # take the coordinates of it
+      # check if this neighbour_of_symbol is in that enum
+      # if it is, return the number
+      # else, return 0
+
+      numbers_with_coordinates
+      |> Enum.map(fn {number, coordinates} ->
+        if Enum.find_index(coordinates, &(neighbour_of_symbol == &1)), do: number, else: 0
+      end)
+    end)
+    |> Enum.uniq()
+    |> Enum.filter(&(&1 > 0))
+
+  if length(adjacent_numbers) == 2,
+    do: Enum.at(adjacent_numbers, 0) * Enum.at(adjacent_numbers, 1),
+    else: 0
+end)
 |> Enum.sum()
 |> IO.inspect()
