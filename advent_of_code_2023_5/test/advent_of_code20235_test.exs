@@ -6,51 +6,76 @@ defmodule AdventOfCode20235Test do
     assert AdventOfCode20235.read_file("./lib/example_input.txt") |> is_list()
   end
 
-  test "formats the file content to a global map with name as index and an array of strings as values" do
-    file_content =
+  test "converts each raw input line to a {key, values} and builds a global Map with them" do
+    AdventOfCode20235.read_file("./lib/example_input.txt")
+    |> AdventOfCode20235.get_global_map()
+  end
+
+  test "converts seed 98 -> soil 50 and seed 99 -> soil 51" do
+    global_map =
       AdventOfCode20235.read_file("./lib/example_input.txt")
+      |> AdventOfCode20235.get_global_map()
 
-    # |> IO.inspect()
+    assert AdventOfCode20235.convert(global_map, "seed-to-soil", 98) == 50
+    assert AdventOfCode20235.convert(global_map, "seed-to-soil", 99) == 51
+  end
 
-    seeds =
-      Enum.at(file_content, 0)
-      |> String.split(": ")
-      |> then(fn [key, values] -> [{key, values}] end)
-      |> Enum.into(%{})
+  test "converts seed 79 -> soil 81 and seed 13 -> soil 13" do
+    global_map =
+      AdventOfCode20235.read_file("./lib/example_input.txt")
+      |> AdventOfCode20235.get_global_map()
 
-    map_indexes =
-      file_content
-      |> Enum.with_index()
-      |> Enum.filter(fn {val, _} -> String.contains?(val, "map") end)
+    assert AdventOfCode20235.convert(global_map, "seed-to-soil", 79) == 81
+    assert AdventOfCode20235.convert(global_map, "seed-to-soil", 13) == 13
+  end
 
-    value_ranges =
-      map_indexes
-      |> Enum.into(%{})
-      |> Map.values()
-      |> Enum.sort()
-      |> Enum.with_index()
-      |> Enum.map(fn {start, ind} ->
-        if Enum.at(map_indexes, ind + 1) do
-          {_, stop} = Enum.at(map_indexes, ind + 1)
+  test "converts seed 14 -> location 43" do
+    global_map =
+      AdventOfCode20235.read_file("./lib/example_input.txt")
+      |> AdventOfCode20235.get_global_map()
 
-          (start + 1)..(stop - 1)
-        end
-      end)
-      |> Enum.filter(& &1)
+    assert AdventOfCode20235.convert(global_map, "seed-to-soil", 14) == 14
+    assert AdventOfCode20235.convert(global_map, "soil-to-fertilizer", 14) == 53
+    assert AdventOfCode20235.convert(global_map, "fertilizer-to-water", 53) == 49
+    assert AdventOfCode20235.convert(global_map, "water-to-light", 49) == 42
+    assert AdventOfCode20235.convert(global_map, "light-to-temperature", 42) == 42
+    assert AdventOfCode20235.convert(global_map, "temperature-to-humidity", 42) == 43
+    assert AdventOfCode20235.convert(global_map, "humidity-to-location", 43) == 43
+  end
 
-    map_indexes
-    |> Enum.map(fn {key, start_index} -> {key, start_index, []} end)
-    # |> IO.inspect()
-    |> Enum.map(fn {key, start_index, _values} ->
+  test "converts seed 55 -> location 86" do
+    global_map =
+      AdventOfCode20235.read_file("./lib/example_input.txt")
+      |> AdventOfCode20235.get_global_map()
 
-      file_content
-      |> Enum.with_index()
-      |> Enum.filter(fn {line, ind} ->
-        range = Enum.at(value_ranges, start_index - 1)
+    assert AdventOfCode20235.convert(global_map, "seed-to-soil", 55) == 57
+    assert AdventOfCode20235.convert(global_map, "soil-to-fertilizer", 57) == 57
+    assert AdventOfCode20235.convert(global_map, "fertilizer-to-water", 57) == 53
+    assert AdventOfCode20235.convert(global_map, "water-to-light", 53) == 46
+    assert AdventOfCode20235.convert(global_map, "light-to-temperature", 46) == 82
+    assert AdventOfCode20235.convert(global_map, "temperature-to-humidity", 82) == 82
+    assert AdventOfCode20235.convert(global_map, "humidity-to-location", 82) == 86
+  end
 
-        if range, do: ind in Range.to_list(range), else: false
-      end)
-      |> IO.inspect()
-    end)
+  test "converts seed 13 -> location 35" do
+    global_map =
+      AdventOfCode20235.read_file("./lib/example_input.txt")
+      |> AdventOfCode20235.get_global_map()
+
+    assert AdventOfCode20235.convert(global_map, "seed-to-soil", 13) == 13
+    assert AdventOfCode20235.convert(global_map, "soil-to-fertilizer", 13) == 52
+    assert AdventOfCode20235.convert(global_map, "fertilizer-to-water", 52) == 41
+    assert AdventOfCode20235.convert(global_map, "water-to-light", 41) == 34
+    assert AdventOfCode20235.convert(global_map, "light-to-temperature", 34) == 34
+    assert AdventOfCode20235.convert(global_map, "temperature-to-humidity", 34) == 35
+    assert AdventOfCode20235.convert(global_map, "humidity-to-location", 35) == 35
+  end
+
+  test "finds the lowest location value between all seeds" do
+    global_map =
+      AdventOfCode20235.read_file("./lib/example_input.txt")
+      |> AdventOfCode20235.get_global_map()
+
+    assert AdventOfCode20235.get_lowest_location(global_map) == 35
   end
 end
