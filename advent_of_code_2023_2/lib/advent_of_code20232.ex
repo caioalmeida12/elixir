@@ -75,6 +75,23 @@ defmodule AdventOfCode20232 do
     |> Enum.map(&Game.get_id_if_was_possible(&1.id, &1.max_rolls))
     |> Enum.sum()
   end
+
+  def get_sum_of_powers(games) do
+    games
+    |> get_ids_and_max_rolls()
+    |> Enum.map(fn %{id: _id, max_rolls: %{red: red, green: green, blue: blue}} ->
+      red * green * blue
+    end)
+    |> Enum.sum()
+  end
 end
 
-AdventOfCode20232.read_file("./lib/input.txt") |> AdventOfCode20232.get_all_possible_game_ids() |> IO.inspect()
+# Task 1
+AdventOfCode20232.read_file("./lib/input.txt")
+|> AdventOfCode20232.get_all_possible_game_ids()
+|> IO.inspect(label: "Task 1")
+
+# Task 2
+AdventOfCode20232.read_file("./lib/input.txt")
+|> AdventOfCode20232.get_sum_of_powers()
+|> IO.inspect(label: "Task 2")
