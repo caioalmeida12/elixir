@@ -30,6 +30,17 @@ defmodule AdventOfCode20236 do
     |> Enum.map(fn {time, index} -> {time, Enum.at(distances, index)} end)
   end
 
+  def get_races_2(input) do
+    [raw_times, raw_distances] = input
+
+    [
+      {
+        String.replace(raw_times, ~r/[^\d]/, "") |> String.to_integer(),
+        String.replace(raw_distances, ~r/[^\d]/, "") |> String.to_integer()
+      }
+    ]
+  end
+
   def count_possibilities_for_race({duration, record_distance}) do
     optimized_possibilities =
       1..Integer.floor_div(duration, 2)
@@ -43,7 +54,7 @@ defmodule AdventOfCode20236 do
 end
 
 AdventOfCode20236.read_file(:real)
-|> AdventOfCode20236.get_races()
+|> AdventOfCode20236.get_races_2()
 |> Enum.map(&AdventOfCode20236.count_possibilities_for_race/1)
 |> Enum.reduce(1, &(&1 * &2))
 |> IO.inspect(charlists: :as_lists)
