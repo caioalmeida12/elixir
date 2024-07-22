@@ -210,7 +210,7 @@ AdventOfCode20237.read_file(:real)
 |> AdventOfCode20237.get_total_winnings()
 |> IO.inspect(label: "task 1")
 
-# Task 2 - 249400220
+# Task 2
 AdventOfCode20237.read_file(:real)
 |> Enum.map(&AdventOfCode20237.get_hand_type_2/1)
 |> AdventOfCode20237.full_sort_2()
