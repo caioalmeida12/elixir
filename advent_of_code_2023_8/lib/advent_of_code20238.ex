@@ -36,11 +36,15 @@ defmodule AdventOfCode20238 do
   def next_instruction(instructions, invalid_ind),
     do: next_instruction(instructions, invalid_ind - length(instructions))
 
-  def count_steps(%{root: "ZZZ"}, _nodes, {_instruction, instruction_ind}, _instructions),
-    do: instruction_ind
+  def count_steps(
+        %{root: <<_::binary-size(2), "Z">>},
+        _nodes,
+        {_instruction, instruction_ind},
+        _instructions
+      ),
+      do: instruction_ind
 
   def count_steps(node, nodes, {instruction, instruction_ind}, instructions) do
-    IO.inspect(nodes)
     next_node = next_node(instruction, node, nodes)
     next_instruction = next_instruction(instructions, instruction_ind)
 
@@ -60,21 +64,59 @@ defmodule AdventOfCode20238 do
     )
   end
 
+  def next_step(starting_nodes, instructions, instruction_ind, nodes) do
+    instruction = next_instruction(instructions, instruction_ind)
+
+    next_nodes =
+      starting_nodes
+      |> Enum.map(&AdventOfCode20238.next_node(instruction, &1, nodes))
+
+    finished? =
+      next_nodes
+      |> Enum.all?(fn %{root: root} -> Regex.match?(~r/^([A-Z]|[1-9]){2}Z$/, root) end)
+
+    if finished? do
+      instruction_ind + 2
+    else
+      next_step(next_nodes, instructions, instruction_ind + 1, nodes)
+    end
+  end
+
+  def factor(n), do: factor(n, 2) |> Enum.frequencies()
+
+  def factor(n, i) when i <= n do
+    if rem(n, i) == 0 do
+      [i | factor(div(n, i), i)]
+    else
+      factor(n, i + 1)
+    end
+  end
+
+  def factor(_, _), do: []
+
   def from_XXA_to_XXZ(instructions, nodes) do
     starting_positions =
       nodes
       |> Enum.filter(&Regex.match?(~r/^([A-Z]|[1-9]){2}A$/, &1.root))
 
-    count_steps(
-      %{root: "11A", left: "11B", right: "XXX"},
-      nodes,
-      instructions |> Enum.with_index() |> Enum.at(0),
-      instructions
+    starting_positions
+    |> Enum.map(
+      &count_steps(
+        &1,
+        nodes,
+        instructions |> Enum.with_index() |> Enum.at(0),
+        instructions
+      )
     )
+    |> Enum.map(&factor/1)
+    |> Enum.reduce(fn fs1, fs2 ->
+      Map.merge(fs1, fs2, fn _, p1, p2 -> min(p1, p2) end)
+    end)
+    |> Enum.reduce(1, fn {num, pow}, acc -> acc * num ** pow end)
   end
 end
 
-[raw_instructions, _ | raw_nodes] = AdventOfCode20238.read_file(:example_2)
+[raw_instructions, _ | raw_nodes] = AdventOfCode20238.read_file(:real)
 
 instructions = String.graphemes(raw_instructions)
 
@@ -92,3 +134,33 @@ nodes =
 
 AdventOfCode20238.from_XXA_to_XXZ(instructions, nodes)
 |> IO.inspect(label: "task 2")
+
+# AdventOfCode20238.factor(8)
+# |> IO.inspect()
+
+# defmodule Part2 do
+#   def factor(n), do: factor(n, 2) |> Enum.frequencies()
+
+#   def factor(n, i) when i <= n do
+#     if rem(n, i) == 0 do
+#       [i | factor(div(n, i), i)]
+#     else
+#       factor(n, i + 1)
+#     end
+#   end
+
+#   def factor(_, _), do: []
+# end
+
+# %{network: network, dirs: dirs} = Aoc.read_input(full)
+# starts = network |> Map.keys() |> Enum.filter(&String.ends_with?(&1, "A"))
+
+# starts
+# |> Enum.map(fn start ->
+#   Part1.follow_dirs(start, dirs, network, 0, &String.ends_with?(&1, "Z"))
+# end)
+# |> Enum.map(&Part2.factor/1)
+# |> Enum.reduce(fn fs1, fs2 ->
+#   Map.merge(fs1, fs2, fn _, p1, p2 -> min(p1, p2) end)
+# end)
+# |> Enum.reduce(1, fn {num, pow}, acc -> acc * num ** pow end)
