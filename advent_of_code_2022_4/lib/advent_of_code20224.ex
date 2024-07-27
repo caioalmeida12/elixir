@@ -24,11 +24,11 @@ defmodule AdventOfCode20224 do
     [mapset_one, mapset_two]
   end
 
-  def one_fully_contains_two?(one, two) do
+  def one_fully_contains_another?(one, two) do
     MapSet.subset?(one, two) or MapSet.subset?(two, one)
   end
 
-  def one_partially_contains_two?(one, two) do
+  def one_partially_contains_another?(one, two) do
     not MapSet.disjoint?(one, two)
   end
 end
