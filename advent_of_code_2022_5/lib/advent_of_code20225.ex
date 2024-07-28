@@ -61,13 +61,26 @@ defmodule AdventOfCode20225 do
     end)
   end
 
-  def apply_moves(crates, moves) do
+  def apply_moves_9000(crates, moves) do
     moves
     |> Enum.reduce(crates, fn move, map ->
       from_column = Map.get(map, move.from)
       to_column = Map.get(map, move.to)
 
       crates_that_will_move = Enum.take(from_column, move.amount) |> Enum.reverse()
+
+      Map.put(map, move.from, Enum.drop(from_column, move.amount))
+      |> Map.put(move.to, crates_that_will_move ++ to_column)
+    end)
+  end
+
+  def apply_moves_9001(crates, moves) do
+    moves
+    |> Enum.reduce(crates, fn move, map ->
+      from_column = Map.get(map, move.from)
+      to_column = Map.get(map, move.to)
+
+      crates_that_will_move = Enum.take(from_column, move.amount)
 
       Map.put(map, move.from, Enum.drop(from_column, move.amount))
       |> Map.put(move.to, crates_that_will_move ++ to_column)
@@ -95,6 +108,10 @@ moves =
   raw_movements_string
   |> AdventOfCode20225.get_list_of_moves()
 
-AdventOfCode20225.apply_moves(initial_crates, moves)
+AdventOfCode20225.apply_moves_9000(initial_crates, moves)
+|> AdventOfCode20225.get_top_layer_crates_string()
+|> IO.inspect(label: "task 1")
+
+AdventOfCode20225.apply_moves_9001(initial_crates, moves)
 |> AdventOfCode20225.get_top_layer_crates_string()
 |> IO.inspect(label: "task 1")
