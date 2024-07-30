@@ -23,28 +23,28 @@ defmodule AdventOfCode20227 do
     end)
   end
 
-  def get_deep_directory_files(tipified_lines, dir_name) do
-    dir_index =
-      tipified_lines
-      |> Enum.find_index(&(&1.value == "$ cd #{dir_name}"))
+  # def get_deep_directory_files(tipified_lines, dir_name) do
+  #   dir_index =
+  #     tipified_lines
+  #     |> Enum.find_index(&(&1.value == "$ cd #{dir_name}"))
 
-    Enum.drop(tipified_lines, dir_index + 1)
-    |> Enum.reject(&(&1.value == "$ ls"))
-    |> Enum.reduce_while([], fn %{type: type, value: value} = line, acc ->
-      cond do
-        # Subfolder detection and scanning
-        String.starts_with?(value, "dir") ->
-          <<"dir ", dir_name::binary>> = value
-          {:cont, acc ++ get_deep_directory_files(tipified_lines, dir_name)}
+  #   Enum.drop(tipified_lines, dir_index + 1)
+  #   |> Enum.reject(&(&1.value == "$ ls"))
+  #   |> Enum.reduce_while([], fn %{type: type, value: value} = line, acc ->
+  #     cond do
+  #       # Subfolder detection and scanning
+  #       String.starts_with?(value, "dir") ->
+  #         <<"dir ", dir_name::binary>> = value
+  #         {:cont, acc ++ get_deep_directory_files(tipified_lines, dir_name)}
 
-        type != :command ->
-          {:cont, [line | acc]}
+  #       type != :command ->
+  #         {:cont, [line | acc]}
 
-        type == :command ->
-          {:halt, acc}
-      end
-    end)
-  end
+  #       type == :command ->
+  #         {:halt, acc}
+  #     end
+  #   end)
+  # end
 
   def get_total_size(files) do
     files
@@ -56,50 +56,48 @@ defmodule AdventOfCode20227 do
   end
 end
 
-typified_lines =
+typed_lines =
   AdventOfCode20227.read_file()
   |> AdventOfCode20227.typify_lines()
 
-# IO.inspect(typified_lines, label: "typified_lines")
-
-AdventOfCode20227.get_deep_directory_files(typified_lines, "a")
-|> AdventOfCode20227.get_total_size()
+# IO.inspect(typed_lines, label: "typed_lines")
+commands =
+  typed_lines
+  |> Enum.filter(&(&1.type == :command))
 
 # |> IO.inspect()
 
-commands =
-  typified_lines
-  |> Enum.filter(&(&1.type == :command))
-
-commands
-|> Enum.reduce(
-  %{
-    commands: commands,
-    current_directory: [],
-    directories_contents: []
-  },
-  fn %{value: command}, state ->
-    cond do
-      command == "$ cd .." ->
+state =
+  commands
+  |> Enum.reduce(
+    %{
+      directories: [],
+      current_directory: []
+    },
+    fn
+      %{value: "$ cd .."}, state ->
         Map.put(state, :current_directory, tl(state.current_directory))
 
-      String.starts_with?(command, "$ cd") ->
-        <<"$ cd ", dir_name::binary>> = command
+      %{value: <<"$ cd ", dir_name::binary>>}, state ->
+        if Regex.match?(~r/[a-z\/]/, dir_name),
+          do:
+            Map.put(state, :directories, [
+              %{name: dir_name, path: state.current_directory} | state.directories
+            ])
+            |> Map.put(:current_directory, [dir_name | state.current_directory]),
+          else: state
 
-        Map.put(state, :current_directory, [
-          String.split(command) |> Enum.at(-1) | state.current_directory
-        ])
-        |> Map.put(:directories_contents, %{
-          name: dir_name,
-          deep_content: [
-            AdventOfCode20227.get_deep_directory_files(typified_lines, dir_name)
-            | state.directories_contents
-          ]
-        })
+      %{value: "$ ls"}, state ->
+        files =
+          typed_lines
+          |> Enum.drop_while(&(&1.value != "$ cd #{hd(state.current_directory)}"))
+          |> Enum.drop(2)
+          |> Enum.take_while(&(&1.type == :file))
 
-      true ->
+        state
+
+      %{value: _value}, state ->
         state
     end
-  end
-)
-|> IO.inspect()
+  )
+  |> IO.inspect()
