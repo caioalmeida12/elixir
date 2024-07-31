@@ -23,29 +23,6 @@ defmodule AdventOfCode20227 do
     end)
   end
 
-  # def get_deep_directory_files(tipified_lines, dir_name) do
-  #   dir_index =
-  #     tipified_lines
-  #     |> Enum.find_index(&(&1.value == "$ cd #{dir_name}"))
-
-  #   Enum.drop(tipified_lines, dir_index + 1)
-  #   |> Enum.reject(&(&1.value == "$ ls"))
-  #   |> Enum.reduce_while([], fn %{type: type, value: value} = line, acc ->
-  #     cond do
-  #       # Subfolder detection and scanning
-  #       String.starts_with?(value, "dir") ->
-  #         <<"dir ", dir_name::binary>> = value
-  #         {:cont, acc ++ get_deep_directory_files(tipified_lines, dir_name)}
-
-  #       type != :command ->
-  #         {:cont, [line | acc]}
-
-  #       type == :command ->
-  #         {:halt, acc}
-  #     end
-  #   end)
-  # end
-
   def get_total_size(files) do
     files
     |> Enum.reduce(0, fn %{value: value}, acc ->
@@ -54,50 +31,69 @@ defmodule AdventOfCode20227 do
       acc + String.to_integer(size)
     end)
   end
+
+  def get_tree(typed_lines) do
+    commands =
+      typed_lines
+      |> Enum.filter(&(&1.type == :command))
+
+    commands
+    |> Enum.reduce(
+      %{
+        directories: [],
+        current_directory: []
+      },
+      fn
+        %{value: "$ cd .."}, state ->
+          Map.put(state, :current_directory, tl(state.current_directory))
+
+        %{value: <<"$ cd ", dir_name::binary>>}, state ->
+          if Regex.match?(~r/[a-z\/]/, dir_name),
+            do:
+              Map.put(state, :directories, [
+                %{name: dir_name, path: state.current_directory} | state.directories
+              ])
+              |> Map.put(:current_directory, [dir_name | state.current_directory]),
+            else: state
+
+        %{value: "$ ls"}, state ->
+          files =
+            typed_lines
+            |> Enum.drop_while(&(&1.value != "$ cd #{hd(state.current_directory)}"))
+            |> Enum.drop(2)
+            |> Enum.take_while(fn
+              %{value: <<"$ cd ", dir_name::binary>>} ->
+                not Regex.match?(~r/[a-z\/]/, dir_name)
+
+              _ ->
+                true
+            end)
+            |> Enum.reject(&(&1.type != :file))
+
+          directory_with_files =
+            Map.get(state, :directories)
+            |> Enum.find(&(&1.name == hd(state.current_directory)))
+            |> Map.update(:files, files, fn _ -> files end)
+
+          Map.get(state, :directories)
+          |> Enum.reject(&(&1.name == hd(state.current_directory)))
+          |> then(fn directories ->
+            [directory_with_files | directories]
+          end)
+          |> then(fn updated_directories ->
+            Map.put(state, :directories, updated_directories)
+          end)
+
+        _, state ->
+          state
+      end
+    )
+  end
 end
 
 typed_lines =
   AdventOfCode20227.read_file()
   |> AdventOfCode20227.typify_lines()
 
-# IO.inspect(typed_lines, label: "typed_lines")
-commands =
-  typed_lines
-  |> Enum.filter(&(&1.type == :command))
-
-# |> IO.inspect()
-
-state =
-  commands
-  |> Enum.reduce(
-    %{
-      directories: [],
-      current_directory: []
-    },
-    fn
-      %{value: "$ cd .."}, state ->
-        Map.put(state, :current_directory, tl(state.current_directory))
-
-      %{value: <<"$ cd ", dir_name::binary>>}, state ->
-        if Regex.match?(~r/[a-z\/]/, dir_name),
-          do:
-            Map.put(state, :directories, [
-              %{name: dir_name, path: state.current_directory} | state.directories
-            ])
-            |> Map.put(:current_directory, [dir_name | state.current_directory]),
-          else: state
-
-      %{value: "$ ls"}, state ->
-        files =
-          typed_lines
-          |> Enum.drop_while(&(&1.value != "$ cd #{hd(state.current_directory)}"))
-          |> Enum.drop(2)
-          |> Enum.take_while(&(&1.type == :file))
-
-        state
-
-      %{value: _value}, state ->
-        state
-    end
-  )
-  |> IO.inspect()
+AdventOfCode20227.get_tree(typed_lines)
+|> IO.inspect()
