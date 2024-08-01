@@ -2,7 +2,7 @@ defmodule KNearestNeighbours do
   require Integer
   require CSV
 
-  def csv_to_points_matrix(file_path) do
+  def csv_to_points_matrix(file_path, classification_col) do
     file_stream =
       file_path
       |> Path.expand(__DIR__)
@@ -10,10 +10,32 @@ defmodule KNearestNeighbours do
       |> CSV.decode(headers: true)
       |> Stream.with_index()
 
-    dimensions =
-      file_stream
-      |> Stream.map(fn {:ok, {val, ind}} -> val end)
-      |> Enum.take(1)
+    file_stream
+    |> Stream.map(fn {{:ok, dimensions}, _ind} ->
+      classification_col_removed =
+        Map.delete(dimensions, classification_col)
+
+      floats =
+        classification_col_removed
+        |> Map.values()
+        |> Enum.map(fn bin ->
+          Float.parse(bin)
+          |> then(fn {val, _rem} -> val end)
+        end)
+
+      keys =
+        classification_col_removed
+        |> Map.keys()
+
+      classification =
+        Map.get(dimensions, classification_col)
+
+      %{
+        dimensions: Enum.zip(keys, floats) |> Enum.into(%{}),
+        classification: classification
+      }
+    end)
+    |> Enum.take_every(1)
   end
 
   def numbers_matrix_to_points_matrix(numbers_matrix) do
@@ -48,43 +70,48 @@ defmodule KNearestNeighbours do
     end)
   end
 
+  def neighbours_distances(points_matrix, %{dimensions: ref_dimensions} = _reference) do
+    distances =
+      points_matrix
+      |> Enum.map(fn %{dimensions: dest_dimensions} ->
+        Enum.zip(Map.values(dest_dimensions), Map.values(ref_dimensions))
+        |> Enum.map(fn {dest_val, ref_val} ->
+          (ref_val - dest_val)
+          |> :math.pow(2)
+        end)
+        |> Enum.sum()
+        |> :math.sqrt()
+      end)
+
+    Enum.zip(points_matrix, distances)
+    |> Enum.map(fn {point, distance} ->
+      Map.put(point, :distance, distance)
+    end)
+    |> Enum.reject(&(&1.distance == 0))
+  end
+
   def distance(
         %{pos: {ref_line, ref_col}} = _reference,
         %{pos: {dest_line, dest_col}} = _destination
       ) do
-    (Integer.pow(ref_line - dest_line, 2) + Integer.pow(ref_col - dest_col, 2))
+    (:math.pow(ref_line - dest_line, 2) + :math.pow(ref_col - dest_col, 2))
     |> then(&:math.sqrt/1)
-  end
-
-  def neighbours_distances(points_matrix, reference, k_value) do
-    points_matrix
-    |> neighbours(reference, k_value)
-    |> List.flatten()
-    |> Enum.reject(&(&1.pos == reference.pos))
-    |> Enum.map(fn dest ->
-      distance(reference, dest)
-      Map.put(dest, :distance, distance(reference, dest))
-    end)
   end
 
   def predict(points_matrix, reference, k_value) do
     points_matrix
-    |> neighbours_distances(reference, k_value)
-    |> Enum.frequencies_by(& &1.class)
-    |> Enum.max()
-    |> then(fn {prediction, _} ->
-      Map.put(reference, :class, prediction)
-    end)
+    |> neighbours_distances(reference)
+    |> Enum.sort(&(&1.distance < &2.distance))
+    |> Enum.take(k_value)
+    |> Enum.frequencies_by(& &1.classification)
+    |> Enum.max_by(fn {_classification, amount} -> amount end)
+    |> then(fn {prediction, _amount} -> prediction end)
   end
 end
 
-# matrix = [
-#   [1, 2, 3, 4, 5],
-#   [6, 7, 8, 9, 10],
-#   [11, 12, 13, 14, 15],
-#   [16, 17, 18, 19, 20],
-#   [21, 22, 23, 24, 25]
-# ]
+csv =
+  KNearestNeighbours.csv_to_points_matrix("./IRIS.csv", "species")
 
-KNearestNeighbours.csv_to_points_matrix("./IRIS.csv")
+csv
+|> KNearestNeighbours.predict(Enum.at(csv, 139), 2)
 |> IO.inspect()
