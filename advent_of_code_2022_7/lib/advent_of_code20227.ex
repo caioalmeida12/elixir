@@ -80,25 +80,62 @@ defmodule AdventOfCode20227 do
       end
     end)
   end
+
+  def interpret_lines(file_content) do
+    file_content
+    |> prepare_lines()
+    |> Enum.reduce(
+      %{
+        curr_dir: [],
+        dir_sizes: %{},
+        all_dirs: []
+      },
+      fn line, state ->
+        interpret_line(line, state)
+      end
+    )
+  end
+
+  def total_size_of_dirs_smaller_than_100_000(file_content) do
+    interpret_lines(file_content)
+    |> then(fn %{all_dirs: all_dirs} = state ->
+      all_dirs
+      |> Enum.reduce(0, fn dir_name, total ->
+        size = total_size_of_dir(state, dir_name)
+        if size <= 100_000, do: total + size, else: total
+      end)
+    end)
+  end
+
+  def what_dir_should_be_deleted(file_content) do
+    total_space = 70_000_000
+    update_size = 30_000_000
+
+    state = interpret_lines(file_content)
+
+    used_space = total_size_of_dir(state, "/")
+
+    unused_space = total_space - used_space
+
+    needs_to_be_deleted = update_size - unused_space
+
+    state
+    |> then(fn %{all_dirs: all_dirs} = state ->
+      all_dirs
+      |> Enum.map(&total_size_of_dir(state, &1))
+    end)
+    |> Enum.zip_with(state.all_dirs, fn size, dir_name ->
+      %{dir_name: dir_name, size: size}
+    end)
+    |> Enum.filter(&(&1.size >= needs_to_be_deleted))
+    |> Enum.min_by(& &1.size)
+  end
 end
 
 AdventOfCode20227.read_file(:real)
-|> AdventOfCode20227.prepare_lines()
-|> Enum.reduce(
-  %{
-    curr_dir: [],
-    dir_sizes: %{},
-    all_dirs: []
-    },
-    fn line, state ->
-      AdventOfCode20227.interpret_line(line, state)
-    end
-    )
-|> then(fn %{all_dirs: all_dirs} = state ->
-  all_dirs
-  |> Enum.reduce(0, fn dir_name, total ->
-    size = AdventOfCode20227.total_size_of_dir(state, dir_name)
-    if size <= 100_000, do: total + size, else: total
-  end)
-end)
+|> AdventOfCode20227.total_size_of_dirs_smaller_than_100_000()
 |> IO.inspect(label: "task 1")
+
+AdventOfCode20227.read_file(:real)
+|> AdventOfCode20227.what_dir_should_be_deleted()
+|> IO.inspect(label: "task 2")
