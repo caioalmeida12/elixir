@@ -1,11 +1,15 @@
 $ cd /
 $ ls
 dir a
-dir aa
+dir b
 $ cd a
 $ ls
-1 a.txt
+1 first.txt
+1 second.txt
 $ cd ..
-$ cd aa
+$ cd b
 $ ls
-1 a.txt
+dir a
+$ cd a
+$ ls
+1 third.txt

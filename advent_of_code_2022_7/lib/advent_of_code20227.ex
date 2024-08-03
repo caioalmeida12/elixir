@@ -31,10 +31,11 @@ defmodule AdventOfCode20227 do
 
   def interpret_line(
         %{type: :command, value: <<"$ cd ", cd_into::binary>>},
-        %{curr_dir: curr_dir} = state
+        %{curr_dir: curr_dir, all_dirs: all_dirs} = state
       ) do
     state
     |> Map.put(:curr_dir, [cd_into | curr_dir])
+    |> Map.put(:all_dirs, [[cd_into | curr_dir] | all_dirs])
   end
 
   def interpret_line(%{type: :command, value: "$ ls"}, state) do
@@ -74,27 +75,28 @@ defmodule AdventOfCode20227 do
     dir_sizes
     |> Enum.reduce(0, fn {path, size}, total ->
       cond do
-        Enum.all?(dir_name, &(&1 in path)) -> total + size
+        :binary.match("#{path}", "#{dir_name}") != :nomatch -> total + size
         true -> total
       end
     end)
   end
 end
 
-AdventOfCode20227.read_file(:example_2)
+AdventOfCode20227.read_file(:real)
 |> AdventOfCode20227.prepare_lines()
 |> Enum.reduce(
   %{
     curr_dir: [],
-    dir_sizes: %{}
-  },
-  fn line, state ->
-    AdventOfCode20227.interpret_line(line, state)
-  end
-)
-|> then(fn %{dir_sizes: dir_sizes} = state ->
-  dir_sizes
-  |> Enum.reduce(0, fn {dir_name, _dir_size} = _dir_info, total ->
+    dir_sizes: %{},
+    all_dirs: []
+    },
+    fn line, state ->
+      AdventOfCode20227.interpret_line(line, state)
+    end
+    )
+|> then(fn %{all_dirs: all_dirs} = state ->
+  all_dirs
+  |> Enum.reduce(0, fn dir_name, total ->
     size = AdventOfCode20227.total_size_of_dir(state, dir_name)
     if size <= 100_000, do: total + size, else: total
   end)
