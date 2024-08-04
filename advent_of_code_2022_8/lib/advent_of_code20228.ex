@@ -25,33 +25,74 @@ defmodule AdventOfCode20228 do
       |> Enum.map(fn {val, col_ind} ->
         cond do
           col_ind == 0 and line_ind == 0 ->
-            %{value: String.to_integer(val), type: :outer, has_siblings: [:down, :right]}
+            %{
+              value: String.to_integer(val),
+              type: :outer,
+              pos: {line_ind, col_ind},
+              has_siblings: [:down, :right]
+            }
 
           col_ind == 0 and line_ind == last_line ->
-            %{value: String.to_integer(val), type: :outer, has_siblings: [:up, :right]}
+            %{
+              value: String.to_integer(val),
+              type: :outer,
+              pos: {line_ind, col_ind},
+              has_siblings: [:up, :right]
+            }
 
           col_ind == last_col and line_ind == 0 ->
-            %{value: String.to_integer(val), type: :outer, has_siblings: [:down, :left]}
+            %{
+              value: String.to_integer(val),
+              type: :outer,
+              pos: {line_ind, col_ind},
+              has_siblings: [:down, :left]
+            }
 
           col_ind == last_col and line_ind == last_line ->
-            %{value: String.to_integer(val), type: :outer, has_siblings: [:up, :left]}
+            %{
+              value: String.to_integer(val),
+              type: :outer,
+              pos: {line_ind, col_ind},
+              has_siblings: [:up, :left]
+            }
 
           line_ind == 0 ->
-            %{value: String.to_integer(val), type: :outer, has_siblings: [:down]}
+            %{
+              value: String.to_integer(val),
+              type: :outer,
+              pos: {line_ind, col_ind},
+              has_siblings: [:down]
+            }
 
           line_ind == last_line ->
-            %{value: String.to_integer(val), type: :outer, has_siblings: [:up]}
+            %{
+              value: String.to_integer(val),
+              type: :outer,
+              pos: {line_ind, col_ind},
+              has_siblings: [:up]
+            }
 
           col_ind == 0 ->
-            %{value: String.to_integer(val), type: :outer, has_siblings: [:right]}
+            %{
+              value: String.to_integer(val),
+              type: :outer,
+              pos: {line_ind, col_ind},
+              has_siblings: [:right]
+            }
 
           col_ind == last_col ->
-            %{value: String.to_integer(val), type: :outer, has_siblings: [:left]}
+            %{
+              value: String.to_integer(val),
+              type: :outer,
+              pos: {line_ind, col_ind},
+              has_siblings: [:left]
+            }
 
           true ->
             %{
               value: String.to_integer(val),
               type: :inner,
+              pos: {line_ind, col_ind},
               has_siblings: [:up, :right, :down, :left]
             }
         end
@@ -202,46 +243,48 @@ defmodule AdventOfCode20228 do
     end)
   end
 
+  def prepare_for_counting(file_content, mapping_fn) do
+    file_content
+    |> Enum.map(fn line ->
+      line
+      |> String.graphemes()
+      |> Enum.with_index(fn element, col_ind -> {String.to_integer(element), col_ind} end)
+      |> Enum.reduce(%{}, fn {val, col_ind}, acc -> mapping_fn.({val, col_ind}, acc) end)
+    end)
+    |> Enum.flat_map(&Enum.into(&1, []))
+  end
+
   def count_visible_trees(:up, file_content) do
     file_content
-    |> populate_siblings()
-    |> Enum.with_index()
-    |> Enum.map(fn {line, line_ind} ->
-      line
-      |> Enum.with_index()
+    |> prepare_for_counting(fn {val, col_ind}, acc -> Map.put(acc, col_ind, val) end)
+    |> Enum.group_by(fn {k, _v} -> k end, fn {_k, v} -> v end)
+    |> Enum.map(fn {_col_ind, col_values} ->
+      col_values
       |> Enum.reduce_while(
-        %{last_biggest: 0, count: 0},
-        fn {
-             %{
-               value: value,
-               siblings: siblings
-             } = val,
-             col_ind
-           },
-           acc ->
-          %{value: down_value} = Enum.find(val.siblings, &(&1.pos == :down))
-
-          IO.inspect(down_value)
-
-          if down_value > value do
-            {
-              :cont,
-              %{
-                last_biggest: down_value,
-                count: acc.count + 1
+        %{
+          curr_size: 0,
+          count: 0
+        },
+        fn next_size, %{curr_size: curr_size, count: count} = col_acc ->
+          cond do
+            next_size > curr_size ->
+              {
+                :cont,
+                col_acc
+                |> Map.put(:curr_size, next_size)
+                |> Map.put(:count, count + 1)
               }
-            }
-          else
-            IO.inspect(acc, label: :halting)
 
-            {
-              :halt,
-              acc
-            }
+            next_size == 0 ->
+              {:cont, col_acc}
+
+            true ->
+              {:halt, col_acc.count}
           end
         end
       )
     end)
+    |> Enum.sum()
   end
 end
 
