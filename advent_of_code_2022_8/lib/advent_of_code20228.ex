@@ -243,6 +243,17 @@ defmodule AdventOfCode20228 do
     end)
   end
 
+  def visible_from(%{value: value, siblings: siblings} = reference) do
+    siblings
+    |> Enum.reduce([], fn %{value: sib_value, pos: sib_pos}, acc ->
+      if value > sib_value do
+        [sib_pos | acc]
+      else
+        acc
+      end
+    end)
+  end
+
   def prepare_for_counting(file_content, mapping_fn) do
     file_content
     |> Enum.map(fn line ->
@@ -254,42 +265,25 @@ defmodule AdventOfCode20228 do
     |> Enum.flat_map(&Enum.into(&1, []))
   end
 
-  def count_visible_trees(:up, file_content) do
-    file_content
-    |> prepare_for_counting(fn {val, col_ind}, acc -> Map.put(acc, col_ind, val) end)
-    |> Enum.group_by(fn {k, _v} -> k end, fn {_k, v} -> v end)
-    |> Enum.map(fn {_col_ind, col_values} ->
-      col_values
-      |> Enum.reduce_while(
-        %{
-          curr_size: 0,
-          count: 0
-        },
-        fn next_size, %{curr_size: curr_size, count: count} = col_acc ->
-          cond do
-            next_size > curr_size ->
-              {
-                :cont,
-                col_acc
-                |> Map.put(:curr_size, next_size)
-                |> Map.put(:count, count + 1)
-              }
+  def count_visible_trees(file_content) do
+    labeled =
+      file_content
+      |> populate_siblings()
 
-            next_size == 0 ->
-              {:cont, col_acc}
+    %{outer: _outer, inner: inner} =
+      labeled
+      |> List.flatten()
+      |> Enum.group_by(& &1.type)
 
-            true ->
-              {:halt, col_acc.count}
-          end
-        end
-      )
-    end)
-    |> Enum.sum()
+    inner
+    |> Enum.map(&visible_from/1)
+
+    # |> prepare_for_counting(fn {val, col_ind}, acc -> Map.put(acc, col_ind, val) end)
   end
 end
 
 file_content =
   AdventOfCode20228.read_file()
 
-AdventOfCode20228.count_visible_trees(:up, file_content)
+AdventOfCode20228.count_visible_trees(file_content)
 |> IO.inspect()
