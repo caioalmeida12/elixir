@@ -116,11 +116,11 @@ defmodule AdventOfCode20228 do
 
     %{true: above, false: below} =
       same_col
-      |> Enum.group_by(fn %{pos: {line, _col}} -> line > ref_line end)
+      |> Enum.group_by(fn %{pos: {line, _col}} -> line < ref_line end)
 
     %{true: left, false: right} =
       same_line
-      |> Enum.group_by(fn %{pos: {_line, col}} -> col > ref_col end)
+      |> Enum.group_by(fn %{pos: {_line, col}} -> col < ref_col end)
 
     visible_from_direction?(above, reference) or visible_from_direction?(below, reference) or
       visible_from_direction?(left, reference) or visible_from_direction?(right, reference)
@@ -144,10 +144,67 @@ defmodule AdventOfCode20228 do
 
     outer_visible + inner_visible
   end
+
+  def scenic_score(file_content, %{value: ref_val, pos: {ref_line, ref_col}} = _reference) do
+    siblings =
+      file_content
+      |> label_inner_and_outer()
+      |> List.flatten()
+
+    same_line =
+      siblings
+      |> Enum.filter(fn %{pos: {line, col}} -> line == ref_line and col != ref_col end)
+
+    same_col =
+      siblings
+      |> Enum.filter(fn %{pos: {line, col}} -> col == ref_col and line != ref_line end)
+
+    [above, below] =
+      same_col
+      |> Enum.group_by(fn %{pos: {line, _col}} -> line < ref_line end)
+      |> then(fn
+        %{true: above, false: below} -> [above, below]
+        %{true: above} -> [above, []]
+        %{false: below} -> [[], below]
+      end)
+
+    [left, right] =
+      same_line
+      |> Enum.group_by(fn %{pos: {_line, col}} -> col < ref_col end)
+      |> then(fn
+        %{true: left, false: right} -> [left, right]
+        %{true: left} -> [left, []]
+        %{false: right} -> [[], right]
+      end)
+
+    [above, right, below, left]
+    |> Enum.map(fn dir ->
+      dir
+      |> Enum.reduce_while(0, fn %{value: value}, acc ->
+        if ref_val > value do
+          {:cont, acc + 1}
+        else
+          {:halt, acc}
+        end
+      end)
+    end)
+    |> Enum.product()
+  end
+
+  def biggest_scenic_score(file_content) do
+    file_content
+    |> label_inner_and_outer()
+    |> List.flatten()
+    |> Enum.map(&scenic_score(file_content, &1))
+    |> Enum.with_index()
+
+    # |> Enum.max()
+  end
 end
 
-file_content =
-  AdventOfCode20228.read_file()
+# AdventOfCode20228.read_file()
+# |> AdventOfCode20228.count_visible_trees()
 
-AdventOfCode20228.count_visible_trees(file_content)
+AdventOfCode20228.read_file()
+|> AdventOfCode20228.biggest_scenic_score()
 |> IO.inspect()
