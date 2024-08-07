@@ -28,262 +28,183 @@ defmodule AdventOfCode20228 do
             %{
               value: String.to_integer(val),
               type: :outer,
-              pos: {line_ind, col_ind},
-              has_siblings: [:down, :right]
+              pos: {line_ind, col_ind}
             }
 
           col_ind == 0 and line_ind == last_line ->
             %{
               value: String.to_integer(val),
               type: :outer,
-              pos: {line_ind, col_ind},
-              has_siblings: [:up, :right]
+              pos: {line_ind, col_ind}
             }
 
           col_ind == last_col and line_ind == 0 ->
             %{
               value: String.to_integer(val),
               type: :outer,
-              pos: {line_ind, col_ind},
-              has_siblings: [:down, :left]
+              pos: {line_ind, col_ind}
             }
 
           col_ind == last_col and line_ind == last_line ->
             %{
               value: String.to_integer(val),
               type: :outer,
-              pos: {line_ind, col_ind},
-              has_siblings: [:up, :left]
+              pos: {line_ind, col_ind}
             }
 
           line_ind == 0 ->
             %{
               value: String.to_integer(val),
               type: :outer,
-              pos: {line_ind, col_ind},
-              has_siblings: [:down]
+              pos: {line_ind, col_ind}
             }
 
           line_ind == last_line ->
             %{
               value: String.to_integer(val),
               type: :outer,
-              pos: {line_ind, col_ind},
-              has_siblings: [:up]
+              pos: {line_ind, col_ind}
             }
 
           col_ind == 0 ->
             %{
               value: String.to_integer(val),
               type: :outer,
-              pos: {line_ind, col_ind},
-              has_siblings: [:right]
+              pos: {line_ind, col_ind}
             }
 
           col_ind == last_col ->
             %{
               value: String.to_integer(val),
               type: :outer,
-              pos: {line_ind, col_ind},
-              has_siblings: [:left]
+              pos: {line_ind, col_ind}
             }
 
           true ->
             %{
               value: String.to_integer(val),
               type: :inner,
-              pos: {line_ind, col_ind},
-              has_siblings: [:up, :right, :down, :left]
+              pos: {line_ind, col_ind}
             }
         end
       end)
     end)
   end
 
-  defp sibling_value(:down, file_content, line_ind, col_ind) do
-    file_content
-    |> Enum.at(line_ind + 1)
-    |> String.graphemes()
-    |> Enum.at(col_ind)
-    |> String.to_integer()
+  defp visible_from_direction?(
+         direction,
+         %{value: ref_value} = reference
+       )
+       when is_list(direction) and is_map(reference) do
+    direction
+    |> Enum.all?(fn %{value: value} -> value < ref_value end)
   end
 
-  defp sibling_value(:right, file_content, line_ind, col_ind) do
-    file_content
-    |> Enum.at(line_ind)
-    |> String.graphemes()
-    |> Enum.at(col_ind + 1)
-    |> String.to_integer()
-  end
+  def is_visible?(file_content, %{pos: {ref_line, ref_col}} = reference) do
+    siblings =
+      file_content
+      |> label_inner_and_outer()
+      |> List.flatten()
 
-  defp sibling_value(:up, file_content, line_ind, col_ind) do
-    file_content
-    |> Enum.at(line_ind - 1)
-    |> String.graphemes()
-    |> Enum.at(col_ind)
-    |> String.to_integer()
-  end
+    same_line =
+      siblings
+      |> Enum.filter(fn %{pos: {line, col}} -> line == ref_line and col != ref_col end)
 
-  defp sibling_value(:left, file_content, line_ind, col_ind) do
-    file_content
-    |> Enum.at(line_ind)
-    |> String.graphemes()
-    |> Enum.at(col_ind - 1)
-    |> String.to_integer()
-  end
+    same_col =
+      siblings
+      |> Enum.filter(fn %{pos: {line, col}} -> col == ref_col and line != ref_line end)
 
-  def populate_siblings(file_content) do
-    file_content
-    |> label_inner_and_outer()
-    |> Enum.with_index()
-    |> Enum.map(fn {line, line_ind} ->
-      line
-      |> Enum.with_index()
-      |> Enum.map(fn
-        {%{has_siblings: has_siblings} = labeled, col_ind} ->
-          case has_siblings do
-            [:down, :right] ->
-              labeled
-              |> Map.update(
-                :siblings,
-                [
-                  %{pos: :down, value: sibling_value(:down, file_content, line_ind, col_ind)},
-                  %{pos: :right, value: sibling_value(:right, file_content, line_ind, col_ind)}
-                ],
-                fn val -> val end
-              )
+    %{true: above, false: below} =
+      same_col
+      |> Enum.group_by(fn %{pos: {line, _col}} -> line < ref_line end)
 
-            [:up, :right] ->
-              labeled
-              |> Map.update(
-                :siblings,
-                [
-                  %{pos: :up, value: sibling_value(:up, file_content, line_ind, col_ind)},
-                  %{pos: :right, value: sibling_value(:right, file_content, line_ind, col_ind)}
-                ],
-                fn val -> val end
-              )
+    %{true: left, false: right} =
+      same_line
+      |> Enum.group_by(fn %{pos: {_line, col}} -> col < ref_col end)
 
-            [:down, :left] ->
-              labeled
-              |> Map.update(
-                :siblings,
-                [
-                  %{pos: :down, value: sibling_value(:down, file_content, line_ind, col_ind)},
-                  %{pos: :left, value: sibling_value(:left, file_content, line_ind, col_ind)}
-                ],
-                fn val -> val end
-              )
-
-            [:up, :left] ->
-              labeled
-              |> Map.update(
-                :siblings,
-                [
-                  %{pos: :up, value: sibling_value(:up, file_content, line_ind, col_ind)},
-                  %{pos: :left, value: sibling_value(:left, file_content, line_ind, col_ind)}
-                ],
-                fn val -> val end
-              )
-
-            [:down] ->
-              labeled
-              |> Map.update(
-                :siblings,
-                [
-                  %{pos: :down, value: sibling_value(:down, file_content, line_ind, col_ind)}
-                ],
-                fn val -> val end
-              )
-
-            [:up] ->
-              labeled
-              |> Map.update(
-                :siblings,
-                [
-                  %{pos: :up, value: sibling_value(:up, file_content, line_ind, col_ind)}
-                ],
-                fn val -> val end
-              )
-
-            [:right] ->
-              labeled
-              |> Map.update(
-                :siblings,
-                [
-                  %{pos: :right, value: sibling_value(:right, file_content, line_ind, col_ind)}
-                ],
-                fn val -> val end
-              )
-
-            [:left] ->
-              labeled
-              |> Map.update(
-                :siblings,
-                [
-                  %{pos: :left, value: sibling_value(:left, file_content, line_ind, col_ind)}
-                ],
-                fn val -> val end
-              )
-
-            [:up, :right, :down, :left] ->
-              labeled
-              |> Map.update(
-                :siblings,
-                [
-                  %{pos: :up, value: sibling_value(:up, file_content, line_ind, col_ind)},
-                  %{pos: :right, value: sibling_value(:right, file_content, line_ind, col_ind)},
-                  %{pos: :down, value: sibling_value(:down, file_content, line_ind, col_ind)},
-                  %{pos: :left, value: sibling_value(:left, file_content, line_ind, col_ind)}
-                ],
-                fn val -> val end
-              )
-          end
-      end)
-    end)
-  end
-
-  def visible_from(%{value: value, siblings: siblings} = reference) do
-    siblings
-    |> Enum.reduce([], fn %{value: sib_value, pos: sib_pos}, acc ->
-      if value > sib_value do
-        [sib_pos | acc]
-      else
-        acc
-      end
-    end)
-  end
-
-  def prepare_for_counting(file_content, mapping_fn) do
-    file_content
-    |> Enum.map(fn line ->
-      line
-      |> String.graphemes()
-      |> Enum.with_index(fn element, col_ind -> {String.to_integer(element), col_ind} end)
-      |> Enum.reduce(%{}, fn {val, col_ind}, acc -> mapping_fn.({val, col_ind}, acc) end)
-    end)
-    |> Enum.flat_map(&Enum.into(&1, []))
+    visible_from_direction?(above, reference) or visible_from_direction?(below, reference) or
+      visible_from_direction?(left, reference) or visible_from_direction?(right, reference)
   end
 
   def count_visible_trees(file_content) do
     labeled =
       file_content
-      |> populate_siblings()
+      |> label_inner_and_outer()
 
-    %{outer: _outer, inner: inner} =
+    %{outer: outer, inner: inner} =
       labeled
       |> List.flatten()
       |> Enum.group_by(& &1.type)
 
-    inner
-    |> Enum.map(&visible_from/1)
+    inner_visible =
+      inner
+      |> Enum.count(&is_visible?(file_content, &1))
 
-    # |> prepare_for_counting(fn {val, col_ind}, acc -> Map.put(acc, col_ind, val) end)
+    outer_visible = Enum.count(outer)
+
+    outer_visible + inner_visible
+  end
+
+  def scenic_score(file_content, %{value: ref_val, pos: {ref_line, ref_col}} = _reference) do
+    siblings =
+      file_content
+      |> label_inner_and_outer()
+      |> List.flatten()
+
+    same_line =
+      siblings
+      |> Enum.filter(fn %{pos: {line, col}} -> line == ref_line and col != ref_col end)
+
+    same_col =
+      siblings
+      |> Enum.filter(fn %{pos: {line, col}} -> col == ref_col and line != ref_line end)
+
+    [above, below] =
+      same_col
+      |> Enum.group_by(fn %{pos: {line, _col}} -> line < ref_line end)
+      |> then(fn
+        %{true: above, false: below} -> [above, below]
+        %{true: above} -> [above, []]
+        %{false: below} -> [[], below]
+      end)
+
+    [left, right] =
+      same_line
+      |> Enum.group_by(fn %{pos: {_line, col}} -> col < ref_col end)
+      |> then(fn
+        %{true: left, false: right} -> [left, right]
+        %{true: left} -> [left, []]
+        %{false: right} -> [[], right]
+      end)
+
+    [above, right, below, left]
+    |> Enum.map(fn dir ->
+      dir
+      |> Enum.reduce_while(0, fn %{value: value}, acc ->
+        if ref_val > value do
+          {:cont, acc + 1}
+        else
+          {:halt, acc}
+        end
+      end)
+    end)
+    |> Enum.product()
+  end
+
+  def biggest_scenic_score(file_content) do
+    file_content
+    |> label_inner_and_outer()
+    |> List.flatten()
+    |> Enum.map(&scenic_score(file_content, &1))
+    |> Enum.with_index()
+
+    # |> Enum.max()
   end
 end
 
-file_content =
-  AdventOfCode20228.read_file()
+# AdventOfCode20228.read_file()
+# |> AdventOfCode20228.count_visible_trees()
 
-AdventOfCode20228.count_visible_trees(file_content)
+AdventOfCode20228.read_file()
+|> AdventOfCode20228.biggest_scenic_score()
 |> IO.inspect()
