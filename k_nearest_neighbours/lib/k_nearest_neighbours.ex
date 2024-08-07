@@ -1,26 +1,55 @@
 defmodule KNearestNeighbours do
+  require Integer
+
   def numbers_matrix_to_point_matrix(numbers_matrix) do
     numbers_matrix
     |> Enum.with_index(fn line, line_ind ->
       line
       |> Enum.with_index(fn val, col_ind ->
-        %{value: val, pos: {line_ind, col_ind}}
+        %{
+          value: val,
+          pos: {line_ind, col_ind},
+          class: if(Integer.is_even(val), do: :even, else: :odd)
+        }
       end)
     end)
   end
 
-  def neighbours(points_matrix, %{pos: {ref_line, _ref_col}} = _reference, k_value) do
+  def neighbours(points_matrix, %{pos: {ref_line, ref_col}} = reference, k_value) do
+    min_line = max(ref_line - k_value, 0)
+    max_line = min(ref_line + k_value, length(hd(points_matrix)))
+    min_col = max(ref_col - k_value, 0)
+    max_col = min(ref_line + k_value, length(hd(points_matrix)))
+
     points_matrix
-    |> Enum.with_index()
-    |> Enum.reduce([], fn {line, line_ind}, acc ->
-      if line_ind in (ref_line - k_value)..(ref_line + k_value),
-        do: [line | acc],
-        else: acc
+    |> List.flatten()
+    |> Enum.reject(&(&1.pos == reference.pos))
+    |> Enum.reduce([], fn %{pos: {dest_line, dest_col}} = destination, acc ->
+      if(dest_line in min_line..max_line and dest_col in min_col..max_col) do
+        [destination | acc]
+      else
+        acc
+      end
     end)
   end
 
-  def hello do
-    :world
+  def distance(
+        %{pos: {ref_line, ref_col}} = _reference,
+        %{pos: {dest_line, dest_col}} = _destination
+      ) do
+    (Integer.pow(ref_line - dest_line, 2) + Integer.pow(ref_col - dest_col, 2))
+    |> then(&:math.sqrt/1)
+  end
+
+  def neighbours_distances(points_matrix, reference, k_value) do
+    points_matrix
+    |> neighbours(reference, k_value)
+    |> List.flatten()
+    |> Enum.reject(&(&1.pos == reference.pos))
+    |> Enum.map(fn dest ->
+      distance(reference, dest)
+      Map.put(dest, :distance, distance(reference, dest))
+    end)
   end
 end
 
@@ -33,5 +62,5 @@ matrix = [
 ]
 
 KNearestNeighbours.numbers_matrix_to_point_matrix(matrix)
-|> KNearestNeighbours.neighbours(%{pos: {2, 2}}, 1)
+|> KNearestNeighbours.neighbours_distances(%{pos: {0, 0}}, 2)
 |> IO.inspect()
