@@ -51,6 +51,16 @@ defmodule KNearestNeighbours do
       Map.put(dest, :distance, distance(reference, dest))
     end)
   end
+
+  def predict(points_matrix, reference, k_value) do
+    points_matrix
+    |> neighbours_distances(reference, k_value)
+    |> Enum.frequencies_by(& &1.class)
+    |> Enum.max()
+    |> then(fn {prediction, _} ->
+      Map.put(reference, :class, prediction)
+    end)
+  end
 end
 
 matrix = [
@@ -62,5 +72,5 @@ matrix = [
 ]
 
 KNearestNeighbours.numbers_matrix_to_point_matrix(matrix)
-|> KNearestNeighbours.neighbours_distances(%{pos: {0, 0}}, 2)
+|> KNearestNeighbours.predict(%{pos: {5, 1}}, 2)
 |> IO.inspect()
