@@ -1,7 +1,22 @@
 defmodule KNearestNeighbours do
   require Integer
+  require CSV
 
-  def numbers_matrix_to_point_matrix(numbers_matrix) do
+  def csv_to_points_matrix(file_path) do
+    file_stream =
+      file_path
+      |> Path.expand(__DIR__)
+      |> File.stream!()
+      |> CSV.decode(headers: true)
+      |> Stream.with_index()
+
+    dimensions =
+      file_stream
+      |> Stream.map(fn {:ok, {val, ind}} -> val end)
+      |> Enum.take(1)
+  end
+
+  def numbers_matrix_to_points_matrix(numbers_matrix) do
     numbers_matrix
     |> Enum.with_index(fn line, line_ind ->
       line
@@ -63,14 +78,13 @@ defmodule KNearestNeighbours do
   end
 end
 
-matrix = [
-  [1, 2, 3, 4, 5],
-  [6, 7, 8, 9, 10],
-  [11, 12, 13, 14, 15],
-  [16, 17, 18, 19, 20],
-  [21, 22, 23, 24, 25]
-]
+# matrix = [
+#   [1, 2, 3, 4, 5],
+#   [6, 7, 8, 9, 10],
+#   [11, 12, 13, 14, 15],
+#   [16, 17, 18, 19, 20],
+#   [21, 22, 23, 24, 25]
+# ]
 
-KNearestNeighbours.numbers_matrix_to_point_matrix(matrix)
-|> KNearestNeighbours.predict(%{pos: {5, 1}}, 2)
+KNearestNeighbours.csv_to_points_matrix("./IRIS.csv")
 |> IO.inspect()
