@@ -56,10 +56,32 @@ defmodule AdventOfCode20239 do
     end)
   end
 
-  def top_layer_value(map_of_layers) when is_map(map_of_layers) do
+  def top_layer_last_value(map_of_layers) when is_map(map_of_layers) do
     map_of_layers
     |> Map.get(0)
     |> List.last()
+  end
+
+  def top_layer_first_value(map_of_layers) when is_map(map_of_layers) do
+    map_of_layers
+    |> Map.get(0)
+    |> hd()
+  end
+
+  def extrapolate_backwards(map_of_layers) do
+    keys = Map.keys(map_of_layers) |> Enum.reverse()
+
+    keys
+    |> Enum.reduce(map_of_layers, fn key, acc ->
+      current_values_of_layer =
+        Map.get(acc, key)
+        |> IO.inspect()
+
+      value_to_concat =
+        List.first(current_values_of_layer) - List.first(Map.get(acc, key + 1, [0]))
+
+      Map.put(acc, key, [value_to_concat | current_values_of_layer])
+    end)
   end
 end
 
@@ -67,6 +89,14 @@ AdventOfCode20239.read_file(:real)
 |> AdventOfCode20239.format_input()
 |> Enum.map(&AdventOfCode20239.differentiate_line/1)
 |> Enum.map(&AdventOfCode20239.extrapolate/1)
-|> Enum.map(&AdventOfCode20239.top_layer_value/1)
+|> Enum.map(&AdventOfCode20239.top_layer_last_value/1)
 |> Enum.sum()
 |> IO.inspect(charlists: :as_lists, label: "task  1")
+
+AdventOfCode20239.read_file(:real)
+|> AdventOfCode20239.format_input()
+|> Enum.map(&AdventOfCode20239.differentiate_line/1)
+|> Enum.map(&AdventOfCode20239.extrapolate_backwards/1)
+|> Enum.map(&AdventOfCode20239.top_layer_first_value/1)
+|> Enum.sum()
+|> IO.inspect(charlists: :as_lists, label: "task  2")
