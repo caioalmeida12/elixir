@@ -36,13 +36,37 @@ defmodule AdventOfCode20239 do
 
     new_line_content = Map.get(new_acc, current_layer_index + 1)
 
-    if Enum.sum(new_line_content) == 0,
+    if Enum.all?(new_line_content, &(&1 == 0)),
       do: new_acc,
       else: differentiate_line(new_acc, current_layer_index + 1)
   end
+
+  def extrapolate(map_of_layers) do
+    keys = Map.keys(map_of_layers) |> Enum.reverse()
+
+    keys
+    |> Enum.reduce(map_of_layers, fn key, acc ->
+      current_values_of_layer =
+        Map.get(acc, key)
+        |> IO.inspect()
+
+      value_to_concat = List.last(current_values_of_layer) + List.last(Map.get(acc, key + 1, [0]))
+
+      Map.put(acc, key, Enum.concat(current_values_of_layer, [value_to_concat]))
+    end)
+  end
+
+  def top_layer_value(map_of_layers) when is_map(map_of_layers) do
+    map_of_layers
+    |> Map.get(0)
+    |> List.last()
+  end
 end
 
-AdventOfCode20239.read_file()
+AdventOfCode20239.read_file(:real)
 |> AdventOfCode20239.format_input()
 |> Enum.map(&AdventOfCode20239.differentiate_line/1)
+|> Enum.map(&AdventOfCode20239.extrapolate/1)
+|> Enum.map(&AdventOfCode20239.top_layer_value/1)
+|> Enum.sum()
 |> IO.inspect(charlists: :as_lists, label: "task  1")
