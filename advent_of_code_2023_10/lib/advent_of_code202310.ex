@@ -29,10 +29,48 @@ defmodule Tile do
 
   def populate_connections(%Tile{char: "."} = tile, _matrix_of_tiles), do: tile
 
-  def populate_connections(%Tile{char: "S"} = tile, matrix_of_tiles) do
+  def populate_connections(
+        %Tile{char: "S", pos: {row_ind, col_ind} = pos} = _tile,
+        matrix_of_tiles
+      ) do
+    all_tiles = List.flatten(matrix_of_tiles)
+
+    up = all_tiles |> Enum.filter(&(&1.pos == {row_ind - 1, col_ind})) |> Enum.at(0)
+    right = all_tiles |> Enum.filter(&(&1.pos == {row_ind, col_ind + 1})) |> Enum.at(0)
+    down = all_tiles |> Enum.filter(&(&1.pos == {row_ind + 1, col_ind})) |> Enum.at(0)
+    left = all_tiles |> Enum.filter(&(&1.pos == {row_ind, col_ind - 1})) |> Enum.at(0)
+
+    can_connect_up =
+      if up == nil,
+        do: false,
+        else: Tuple.to_list(up.can_connect_to) |> Enum.find(&(&1 == :down)) != nil
+
+    can_connect_down =
+      if down == nil,
+        do: false,
+        else: Tuple.to_list(down.can_connect_to) |> Enum.find(&(&1 == :up)) != nil
+
+    can_connect_right =
+      if right == nil,
+        do: false,
+        else: Tuple.to_list(right.can_connect_to) |> Enum.find(&(&1 == :left)) != nil
+
+    can_connect_left =
+      if left == nil,
+        do: false,
+        else: Tuple.to_list(left.can_connect_to) |> Enum.find(&(&1 == :right)) != nil
+
+    cond do
+      can_connect_up and can_connect_down -> create_vertical_pipe(pos)
+      can_connect_up and can_connect_right -> create_l_pipe(pos)
+      can_connect_up and can_connect_left -> create_j_pipe(pos)
+      can_connect_down and can_connect_right -> create_f_pipe(pos)
+      can_connect_down and can_connect_left -> create_7_pipe(pos)
+      can_connect_left and can_connect_right -> create_horizontal_pipe(pos)
+    end
   end
 
-  def populate_connections(%Tile{pos: {row_ind, col_ind}} = tile, matrix_of_tiles)
+  def populate_connections(%Tile{pos: {_row_ind, _col_ind}} = tile, matrix_of_tiles)
       when is_map(tile) and is_list(matrix_of_tiles) do
     neighbours(tile, matrix_of_tiles)
     # connections =
@@ -42,14 +80,14 @@ defmodule Tile do
   end
 
   defp create_dot_pipe(pos), do: %Tile{char: ".", can_connect_to: {nil, nil}, pos: pos}
-  defp create_vertical_pipe(pos), do: %Tile{char: "|", can_connect_to: {:top, :down}, pos: pos}
+  defp create_vertical_pipe(pos), do: %Tile{char: "|", can_connect_to: {:up, :down}, pos: pos}
 
   defp create_horizontal_pipe(pos),
     do: %Tile{char: "-", can_connect_to: {:left, :right}, pos: pos}
 
   defp create_f_pipe(pos), do: %Tile{char: "F", can_connect_to: {:down, :right}, pos: pos}
-  defp create_j_pipe(pos), do: %Tile{char: "J", can_connect_to: {:top, :left}, pos: pos}
-  defp create_l_pipe(pos), do: %Tile{char: "L", can_connect_to: {:top, :right}, pos: pos}
+  defp create_j_pipe(pos), do: %Tile{char: "J", can_connect_to: {:up, :left}, pos: pos}
+  defp create_l_pipe(pos), do: %Tile{char: "L", can_connect_to: {:up, :right}, pos: pos}
   defp create_7_pipe(pos), do: %Tile{char: "7", can_connect_to: {:down, :left}, pos: pos}
   defp create_s_pipe(pos), do: %Tile{char: "S", can_connect_to: {:s_tile, :s_tile}, pos: pos}
 end
