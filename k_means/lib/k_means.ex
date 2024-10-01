@@ -51,9 +51,8 @@ defmodule KMeans do
       |> Enum.map(fn {key, value} ->
         {min, max} = Map.get(mins_and_maxes, key)
 
-        {key, (value - min) / (max - min)}
+        (value - min) / (max - min)
       end)
-      |> Enum.into(%{})
     end)
   end
 end
