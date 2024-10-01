@@ -63,6 +63,28 @@ defmodule KMeans do
     end)
     |> then(&:math.sqrt/1)
   end
+
+  def converge(list_of_points, k)
+      when is_list(list_of_points) and
+             is_integer(k) do
+    initial_centroids =
+      list_of_points
+      |> Enum.take_random(k)
+
+    converge(list_of_points, initial_centroids)
+  end
+
+  def converge(list_of_points, list_of_centroids)
+      when is_list(list_of_centroids) and
+             is_list(list_of_points) and
+             is_integer(k) do
+    list_of_points
+    |> Enum.reduce(%{dims: list_of_points, centroid: nil}, fn point, acc ->
+      distances =
+        list_of_centroids
+        |> Enum.map(&distance(&1, point))
+    end)
+  end
 end
 
 csv =
@@ -76,9 +98,5 @@ csv =
     ],
     :normalize
   )
-
-KMeans.distance(
-  [1.0, 1, 1],
-  [2, 2, 2]
-)
-|> IO.inspect()
+  |> KMeans.converge(2)
+  |> IO.inspect()
