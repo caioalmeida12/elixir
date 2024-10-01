@@ -90,32 +90,38 @@ defmodule KMeans do
           distances
           |> Enum.find_index(&(&1 == min_distance))
 
-        [%{dimensions: point, centroid: nearest_centroid} | acc]
+        [
+          %{dimensions: point, centroid: nearest_centroid, distance_to_centroid: min_distance}
+          | acc
+        ]
       end)
 
     new_centroids =
       labeled_points
       |> Enum.group_by(& &1.centroid, & &1.dimensions)
-      |> Enum.map(fn {centroid, list_of_points} ->
+      |> Enum.map(fn {_centroid, list_of_points} ->
         list_of_points
         |> Enum.map(&Enum.with_index/1)
         |> List.flatten()
         |> Enum.group_by(fn {_value, dim} -> dim end, fn {value, _dim} -> value end)
         |> Enum.map(fn {_dim, values} -> Enum.sum(values) / length(values) end)
       end)
+
+    if new_centroids != list_of_centroids,
+      do: converge(list_of_points, new_centroids),
+      else: labeled_points
   end
 end
 
-csv =
-  KMeans.read_csv(
-    "./housing.csv",
-    [
-      "latitude",
-      "longitude",
-      "median_house_value",
-      "housing_median_age"
-    ],
-    :normalize
-  )
-  |> KMeans.converge(2)
-  |> IO.inspect()
+KMeans.read_csv(
+  "./housing.csv",
+  [
+    "latitude",
+    "longitude",
+    "median_house_value",
+    "housing_median_age"
+  ],
+  :normalize
+)
+|> KMeans.converge(2)
+|> IO.inspect()
