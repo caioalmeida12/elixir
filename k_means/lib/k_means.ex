@@ -111,6 +111,15 @@ defmodule KMeans do
       do: converge(list_of_points, new_centroids),
       else: labeled_points
   end
+
+  def wcss(labeled_points) when is_list(labeled_points) do
+    labeled_points
+    |> Enum.group_by(& &1.centroid)
+    |> Enum.map(fn {_centroid, points} ->
+      points
+      |> Enum.reduce(0, &(&1.distance_to_centroid + &2))
+    end)
+  end
 end
 
 KMeans.read_csv(
@@ -124,4 +133,5 @@ KMeans.read_csv(
   :normalize
 )
 |> KMeans.converge(2)
+|> KMeans.wcss()
 |> IO.inspect()
