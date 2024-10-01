@@ -55,6 +55,14 @@ defmodule KMeans do
       end)
     end)
   end
+
+  def distance(reference, destination) when is_list(reference) and is_list(destination) do
+    Enum.zip(reference, destination)
+    |> Enum.reduce(0, fn {dim_ref, dim_dest}, sum_of_squares ->
+      sum_of_squares + :math.pow(dim_ref - dim_dest, 2)
+    end)
+    |> then(&:math.sqrt/1)
+  end
 end
 
 csv =
@@ -68,4 +76,9 @@ csv =
     ],
     :normalize
   )
-  |> IO.inspect()
+
+KMeans.distance(
+  [1.0, 1, 1],
+  [2, 2, 2]
+)
+|> IO.inspect()
