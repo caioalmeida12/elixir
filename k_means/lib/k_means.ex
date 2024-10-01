@@ -2,6 +2,9 @@ defmodule KMeans do
   require Integer
   require CSV
 
+  def read_csv(file_path, columns_to_read, :normalize) when is_list(columns_to_read),
+    do: read_csv(file_path, columns_to_read) |> normalize()
+
   def read_csv(file_path, columns_to_read) when is_list(columns_to_read) do
     file_stream =
       file_path
@@ -56,11 +59,14 @@ defmodule KMeans do
 end
 
 csv =
-  KMeans.read_csv("./housing.csv", [
-    "latitude",
-    "longitude",
-    "median_house_value",
-    "housing_median_age"
-  ])
-  |> KMeans.normalize()
+  KMeans.read_csv(
+    "./housing.csv",
+    [
+      "latitude",
+      "longitude",
+      "median_house_value",
+      "housing_median_age"
+    ],
+    :normalize
+  )
   |> IO.inspect()
