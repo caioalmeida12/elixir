@@ -76,14 +76,22 @@ defmodule KMeans do
 
   def converge(list_of_points, list_of_centroids)
       when is_list(list_of_centroids) and
-             is_list(list_of_points) and
-             is_integer(k) do
-    list_of_points
-    |> Enum.reduce(%{dims: list_of_points, centroid: nil}, fn point, acc ->
-      distances =
-        list_of_centroids
-        |> Enum.map(&distance(&1, point))
-    end)
+             is_list(list_of_points) do
+    labeled_points =
+      list_of_points
+      |> Enum.reduce([], fn point, acc ->
+        distances =
+          list_of_centroids
+          |> Enum.map(&distance(&1, point))
+
+        min_distance = Enum.min(distances)
+
+        nearest_centroid =
+          distances
+          |> Enum.find_index(&(&1 == min_distance))
+
+        [%{dimensions: point, centroid: nearest_centroid} | acc]
+      end)
   end
 end
 
@@ -98,5 +106,6 @@ csv =
     ],
     :normalize
   )
+  |> Enum.take(3)
   |> KMeans.converge(2)
   |> IO.inspect()
