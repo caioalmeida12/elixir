@@ -92,6 +92,17 @@ defmodule KMeans do
 
         [%{dimensions: point, centroid: nearest_centroid} | acc]
       end)
+
+    new_centroids =
+      labeled_points
+      |> Enum.group_by(& &1.centroid, & &1.dimensions)
+      |> Enum.map(fn {centroid, list_of_points} ->
+        list_of_points
+        |> Enum.map(&Enum.with_index/1)
+        |> List.flatten()
+        |> Enum.group_by(fn {_value, dim} -> dim end, fn {value, _dim} -> value end)
+        |> Enum.map(fn {_dim, values} -> Enum.sum(values) / length(values) end)
+      end)
   end
 end
 
@@ -106,6 +117,5 @@ csv =
     ],
     :normalize
   )
-  |> Enum.take(3)
   |> KMeans.converge(2)
   |> IO.inspect()
