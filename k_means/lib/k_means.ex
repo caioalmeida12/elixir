@@ -119,9 +119,11 @@ defmodule KMeans do
       points
       |> Enum.reduce(0, &(&1.distance_to_centroid + &2))
     end)
+    |> Enum.sum()
   end
 end
 
+points =
 KMeans.read_csv(
   "./housing.csv",
   [
@@ -132,6 +134,15 @@ KMeans.read_csv(
   ],
   :normalize
 )
-|> KMeans.converge(2)
-|> KMeans.wcss()
+
+
+1..20
+|> Enum.reduce([], fn k, acc ->
+  wcss =
+  points
+  |> KMeans.converge(k)
+  |> KMeans.wcss()
+
+  [wcss | acc]
+end)
 |> IO.inspect()
