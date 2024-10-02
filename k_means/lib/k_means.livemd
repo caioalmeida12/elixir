@@ -1,0 +1,192 @@
+<!-- livebook:{"file_entries":[{"name":"housing.csv","type":"attachment"}],"persist_outputs":true} -->
+
+# K-Means
+
+```elixir
+Mix.install([
+  {:csv, "~> 3.2"},
+  {:kino, "~> 0.14.1"},
+  {:kino_vega_lite, "~> 0.1.11"}
+])
+```
+
+## Módulo K-Means
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+defmodule KMeans do
+  require Integer
+  require CSV
+
+  def read_csv(file_path, columns_to_read, :normalize) when is_list(columns_to_read),
+    do: read_csv(file_path, columns_to_read) |> normalize()
+
+  def read_csv(file_path, columns_to_read) when is_list(columns_to_read) do
+    file_stream =
+      file_path
+      |> Path.expand(__DIR__)
+      |> File.stream!()
+      |> CSV.decode(headers: true)
+      |> Stream.with_index()
+
+    file_stream
+    |> Enum.map(fn {{:ok, map}, _ind} ->
+      columns_to_read
+      |> Enum.map(&{&1, String.to_float(Map.get(map, &1))})
+      |> Enum.into(%{})
+    end)
+  end
+
+  def normalize(list_of_maps) when is_list(list_of_maps) do
+    keys =
+      list_of_maps
+      |> Enum.at(0)
+      |> Map.keys()
+
+    all_values =
+      keys
+      |> Enum.reduce(%{}, fn key, acc ->
+        value = Enum.map(list_of_maps, &Map.get(&1, key))
+
+        Map.put(acc, key, value)
+      end)
+
+    mins_and_maxes =
+      all_values
+      |> Enum.map(fn {key, values} ->
+        {
+          key,
+          {Enum.min(values), Enum.max(values)}
+        }
+      end)
+      |> Enum.into(%{})
+
+    list_of_maps
+    |> Enum.map(fn dimensions ->
+      dimensions
+      |> Enum.map(fn {key, value} ->
+        {min, max} = Map.get(mins_and_maxes, key)
+
+        (value - min) / (max - min)
+      end)
+    end)
+  end
+
+  def distance(reference, destination) when is_list(reference) and is_list(destination) do
+    Enum.zip(reference, destination)
+    |> Enum.reduce(0, fn {dim_ref, dim_dest}, sum_of_squares ->
+      sum_of_squares + :math.pow(dim_ref - dim_dest, 2)
+    end)
+    |> then(&:math.sqrt/1)
+  end
+
+  def converge(list_of_points, k)
+      when is_list(list_of_points) and
+             is_integer(k) do
+    initial_centroids =
+      list_of_points
+      |> Enum.take_random(k)
+
+    converge(list_of_points, initial_centroids)
+  end
+
+  def converge(list_of_points, list_of_centroids)
+      when is_list(list_of_centroids) and
+             is_list(list_of_points) do
+    labeled_points =
+      list_of_points
+      |> Enum.reduce([], fn point, acc ->
+        distances =
+          list_of_centroids
+          |> Enum.map(&distance(&1, point))
+
+        min_distance = Enum.min(distances)
+
+        nearest_centroid =
+          distances
+          |> Enum.find_index(&(&1 == min_distance))
+
+        [
+          %{dimensions: point, centroid: nearest_centroid, distance_to_centroid: min_distance}
+          | acc
+        ]
+      end)
+
+    new_centroids =
+      labeled_points
+      |> Enum.group_by(& &1.centroid, & &1.dimensions)
+      |> Enum.map(fn {_centroid, list_of_points} ->
+        list_of_points
+        |> Enum.map(&Enum.with_index/1)
+        |> List.flatten()
+        |> Enum.group_by(fn {_value, dim} -> dim end, fn {value, _dim} -> value end)
+        |> Enum.map(fn {_dim, values} -> Enum.sum(values) / length(values) end)
+      end)
+
+    if new_centroids != list_of_centroids,
+      do: converge(list_of_points, new_centroids),
+      else: labeled_points
+  end
+
+  def wcss(labeled_points) when is_list(labeled_points) do
+    labeled_points
+    |> Enum.group_by(& &1.centroid)
+    |> Enum.map(fn {_centroid, points} ->
+      points
+      |> Enum.reduce(0, &(&1.distance_to_centroid + &2))
+    end)
+    |> Enum.sum()
+  end
+end
+```
+
+## Runtime
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+file_path = Kino.FS.file_path("housing.csv")
+
+points =
+  KMeans.read_csv(
+    file_path,
+    [
+      "latitude",
+      "longitude",
+      "median_house_value",
+      "housing_median_age"
+    ],
+    :normalize
+  )
+
+search_values = 1..20
+
+wcss_by_k =
+  search_values
+  |> Enum.reduce([], fn k, acc ->
+    wcss =
+      points
+      |> KMeans.converge(k)
+      |> KMeans.wcss()
+
+    [wcss | acc]
+  end)
+  |> Enum.reverse()
+
+plottable =
+  %{
+    x: Range.to_list(search_values),
+    y: wcss_by_k
+  }
+```
+
+<!-- livebook:{"attrs":"eyJjaGFydF90aXRsZSI6IldDU1MgcG9yIHZhbG9yIGRlIEsiLCJoZWlnaHQiOjUwMCwibGF5ZXJzIjpbeyJhY3RpdmUiOnRydWUsImNoYXJ0X3R5cGUiOiJsaW5lIiwiY29sb3JfZmllbGQiOm51bGwsImNvbG9yX2ZpZWxkX2FnZ3JlZ2F0ZSI6bnVsbCwiY29sb3JfZmllbGRfYmluIjpudWxsLCJjb2xvcl9maWVsZF9zY2FsZV9zY2hlbWUiOm51bGwsImNvbG9yX2ZpZWxkX3R5cGUiOm51bGwsImRhdGFfdmFyaWFibGUiOiJwbG90dGFibGUiLCJnZW9kYXRhX2NvbG9yIjoiYmx1ZSIsImxhdGl0dWRlX2ZpZWxkIjpudWxsLCJsb25naXR1ZGVfZmllbGQiOm51bGwsInhfZmllbGQiOiJ4IiwieF9maWVsZF9hZ2dyZWdhdGUiOm51bGwsInhfZmllbGRfYmluIjpudWxsLCJ4X2ZpZWxkX3NjYWxlX3R5cGUiOm51bGwsInhfZmllbGRfdHlwZSI6InF1YW50aXRhdGl2ZSIsInlfZmllbGQiOiJ5IiwieV9maWVsZF9hZ2dyZWdhdGUiOm51bGwsInlfZmllbGRfYmluIjpudWxsLCJ5X2ZpZWxkX3NjYWxlX3R5cGUiOm51bGwsInlfZmllbGRfdHlwZSI6InF1YW50aXRhdGl2ZSJ9XSwidmxfYWxpYXMiOiJFbGl4aXIuVmVnYUxpdGUiLCJ3aWR0aCI6MTAwMH0","chunks":null,"kind":"Elixir.KinoVegaLite.ChartCell","livebook_object":"smart_cell"} -->
+
+```elixir
+VegaLite.new(width: 1000, height: 500, title: "WCSS por valor de K")
+|> VegaLite.data_from_values(plottable, only: ["x", "y"])
+|> VegaLite.mark(:line)
+|> VegaLite.encode_field(:x, "x", type: :quantitative)
+|> VegaLite.encode_field(:y, "y", type: :quantitative)
+```
