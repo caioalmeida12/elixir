@@ -1,10 +1,12 @@
 defmodule Perceptron do
   defstruct bias: 0, weights: []
 
-  def evaluate(perceptron, inputs, bias) when is_map(perceptron) and is_list(inputs) do
+  def apply_weight({input, weight}) when is_number(input) and is_number(weight) do
+    input * weight
+  end
 
+  def evaluate(perceptron, inputs) when is_map(perceptron) and perceptron.weights == [] do
+    Enum.zip(inputs, inputs)
+    |> Enum.reduce(perceptron.bias, &apply_weight(&1) + &2)
   end
 end
-
-Perceptron.evaluate([[1], [2]], [[1], [2]], -6)
-|> IO.inspect()
