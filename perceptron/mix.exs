@@ -22,7 +22,6 @@ defmodule Perceptron.MixProject do
   defp deps do
     [
       {:csv, "~> 3.2.1"},
-      {:numexy, "~> 0.1.9"}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]

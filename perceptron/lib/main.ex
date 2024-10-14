@@ -1,11 +1,9 @@
 csv =
   FileIO.read_csv("basic.csv", ["Feature1", "Feature2", "Feature3"], :normalize)
 
-perceptron = %Perceptron{}
-
+sigmoid_fn = fn val -> 1 / (1 + :math.exp(-val)) end
 
 csv
-|> Enum.map(&Perceptron.evaluate(perceptron, &1))
-|> Numexy.new()
-|> Numexy.sigmoid()
-|> IO.inspect()
+|> Enum.map(fn line ->
+  Perceptron.evaluate(%Perceptron{}, line, sigmoid_fn)
+end)
