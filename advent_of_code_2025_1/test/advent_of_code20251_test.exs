@@ -43,88 +43,120 @@ defmodule AdventOfCode20251Test do
            end)
   end
 
-  test "processes instructions correctly" do
-    assert AdventOfCode20251.process_instruction([50], {"L", 0}) |> hd() == 50
+  test "processes instructions correctly (Part 1 Logic)" do
+    assert AdventOfCode20251.process_instruction_p1([50], {"L", 0}) |> hd() == 50
 
-    assert AdventOfCode20251.process_instruction([50], {"L", 0})
-           |> AdventOfCode20251.process_instruction({"L", 1})
+    assert AdventOfCode20251.process_instruction_p1([50], {"L", 0})
+           |> AdventOfCode20251.process_instruction_p1({"L", 1})
            |> hd() == 49
 
-    assert AdventOfCode20251.process_instruction([50], {"L", 0})
-           |> AdventOfCode20251.process_instruction({"L", 1})
-           |> AdventOfCode20251.process_instruction({"R", 1})
+    assert AdventOfCode20251.process_instruction_p1([50], {"L", 0})
+           |> AdventOfCode20251.process_instruction_p1({"L", 1})
+           |> AdventOfCode20251.process_instruction_p1({"R", 1})
            |> hd() == 50
 
-    assert AdventOfCode20251.process_instruction([50], {"L", 0})
-           |> AdventOfCode20251.process_instruction({"L", 1})
-           |> AdventOfCode20251.process_instruction({"R", 1})
-           |> AdventOfCode20251.process_instruction({"L", 50})
+    assert AdventOfCode20251.process_instruction_p1([50], {"L", 0})
+           |> AdventOfCode20251.process_instruction_p1({"L", 1})
+           |> AdventOfCode20251.process_instruction_p1({"R", 1})
+           |> AdventOfCode20251.process_instruction_p1({"L", 50})
            |> hd() == 0
 
-    assert AdventOfCode20251.process_instruction([50], {"L", 0})
-           |> AdventOfCode20251.process_instruction({"L", 1})
-           |> AdventOfCode20251.process_instruction({"R", 1})
-           |> AdventOfCode20251.process_instruction({"L", 50})
-           |> AdventOfCode20251.process_instruction({"R", 50})
+    assert AdventOfCode20251.process_instruction_p1([50], {"L", 0})
+           |> AdventOfCode20251.process_instruction_p1({"L", 1})
+           |> AdventOfCode20251.process_instruction_p1({"R", 1})
+           |> AdventOfCode20251.process_instruction_p1({"L", 50})
+           |> AdventOfCode20251.process_instruction_p1({"R", 50})
            |> hd() == 50
 
-    assert AdventOfCode20251.process_instruction([50], {"L", 0})
-           |> AdventOfCode20251.process_instruction({"L", 1})
-           |> AdventOfCode20251.process_instruction({"R", 1})
-           |> AdventOfCode20251.process_instruction({"L", 50})
-           |> AdventOfCode20251.process_instruction({"R", 50})
-           |> AdventOfCode20251.process_instruction({"R", 50})
+    assert AdventOfCode20251.process_instruction_p1([50], {"L", 0})
+           |> AdventOfCode20251.process_instruction_p1({"L", 1})
+           |> AdventOfCode20251.process_instruction_p1({"R", 1})
+           |> AdventOfCode20251.process_instruction_p1({"L", 50})
+           |> AdventOfCode20251.process_instruction_p1({"R", 50})
+           |> AdventOfCode20251.process_instruction_p1({"R", 50})
            |> hd() == 0
 
-    assert AdventOfCode20251.process_instruction([50], {"L", 0})
-           |> AdventOfCode20251.process_instruction({"L", 1})
-           |> AdventOfCode20251.process_instruction({"R", 1})
-           |> AdventOfCode20251.process_instruction({"L", 50})
-           |> AdventOfCode20251.process_instruction({"R", 50})
-           |> AdventOfCode20251.process_instruction({"R", 50})
-           |> AdventOfCode20251.process_instruction({"L", 50})
+    assert AdventOfCode20251.process_instruction_p1([50], {"L", 0})
+           |> AdventOfCode20251.process_instruction_p1({"L", 1})
+           |> AdventOfCode20251.process_instruction_p1({"R", 1})
+           |> AdventOfCode20251.process_instruction_p1({"L", 50})
+           |> AdventOfCode20251.process_instruction_p1({"R", 50})
+           |> AdventOfCode20251.process_instruction_p1({"R", 50})
+           |> AdventOfCode20251.process_instruction_p1({"L", 50})
            |> hd() == 50
 
-    assert AdventOfCode20251.process_instruction([50], {"L", 0})
-           |> AdventOfCode20251.process_instruction({"L", 1})
-           |> AdventOfCode20251.process_instruction({"R", 1})
-           |> AdventOfCode20251.process_instruction({"L", 50})
-           |> AdventOfCode20251.process_instruction({"R", 50})
-           |> AdventOfCode20251.process_instruction({"R", 50})
-           |> AdventOfCode20251.process_instruction({"L", 50})
-           |> AdventOfCode20251.process_instruction({"L", 100})
+    assert AdventOfCode20251.process_instruction_p1([50], {"L", 0})
+           |> AdventOfCode20251.process_instruction_p1({"L", 1})
+           |> AdventOfCode20251.process_instruction_p1({"R", 1})
+           |> AdventOfCode20251.process_instruction_p1({"L", 50})
+           |> AdventOfCode20251.process_instruction_p1({"R", 50})
+           |> AdventOfCode20251.process_instruction_p1({"R", 50})
+           |> AdventOfCode20251.process_instruction_p1({"L", 50})
+           |> AdventOfCode20251.process_instruction_p1({"L", 100})
            |> hd() == 50
   end
 
-  test "correctly counts the amount of zeroes after processing" do
+  test "correctly counts the amount of zeroes after processing (Part 2 Logic)" do
     positions =
       [{"L", 0}, {"L", 1}, {"R", 1}, {"L", 50}, {"R", 50}, {"R", 50}, {"L", 50}, {"L", 100}]
-      |> Enum.reduce([50], fn curr, acc -> AdventOfCode20251.process_instruction(acc, curr) end)
+      |> Enum.reduce([50], fn curr, acc -> AdventOfCode20251.process_instruction_p2(acc, curr) end)
 
-    assert Enum.filter(positions, fn item -> item == 0 end) |> Enum.count() == 2
+    assert Enum.filter(positions, fn item -> item == 0 end) |> Enum.count() == 3
   end
 
-  test "correctly processes the example input" do
+  test "correctly processes the example input for part one" do
     positions =
       AdventOfCode20251.read_file(:example)
       |> AdventOfCode20251.input_to_string_enum()
       |> AdventOfCode20251.string_enum_to_tuple_enum()
       |> Enum.reduce([50], fn curr, acc ->
-        AdventOfCode20251.process_instruction(acc, curr)
+        AdventOfCode20251.process_instruction_p1(acc, curr)
       end)
 
-    assert Enum.filter(positions, fn item -> item == 0 end) |> Enum.count() == 3
+    assert hd(positions) == 32
   end
 
-  test "correctly processes the real input" do
+  test "correctly processes the real input for part one" do
     positions =
       AdventOfCode20251.read_file()
       |> AdventOfCode20251.input_to_string_enum()
       |> AdventOfCode20251.string_enum_to_tuple_enum()
       |> Enum.reduce([50], fn curr, acc ->
-        AdventOfCode20251.process_instruction(acc, curr)
+        AdventOfCode20251.process_instruction_p1(acc, curr)
       end)
 
-    assert Enum.filter(positions, fn item -> item == 0 end) |> Enum.count() == 1139
+    assert hd(positions) > 0
+  end
+
+  test "correctly processes the example input for part two" do
+    positions =
+      AdventOfCode20251.read_file(:example)
+      |> AdventOfCode20251.input_to_string_enum()
+      |> AdventOfCode20251.string_enum_to_tuple_enum()
+      |> Enum.reduce([50], fn curr, acc ->
+        AdventOfCode20251.process_instruction_p2(acc, curr)
+      end)
+
+    assert Enum.filter(positions, fn item -> item == 0 end) |> Enum.count() > 0
+  end
+
+  test "correctly processes the real input for part two" do
+    positions =
+      AdventOfCode20251.read_file()
+      |> AdventOfCode20251.input_to_string_enum()
+      |> AdventOfCode20251.string_enum_to_tuple_enum()
+      |> Enum.reduce([50], fn curr, acc ->
+        AdventOfCode20251.process_instruction_p2(acc, curr)
+      end)
+
+    assert Enum.filter(positions, fn item -> item == 0 end) |> Enum.count() > 0
+  end
+
+  test "correctly counts how many zeros" do
+    assert AdventOfCode20251.count_zeros_passed(50, {"L", 68}) == 1
+    assert AdventOfCode20251.count_zeros_passed(82, {"L", 30}) == 0
+    assert AdventOfCode20251.count_zeros_passed(52, {"R", 48}) == 1
+    assert AdventOfCode20251.count_zeros_passed(52, {"R", 152}) == 2
+    assert AdventOfCode20251.count_zeros_passed(95, {"R", 60}) == 1
   end
 end
